@@ -34,7 +34,7 @@ const CLEAN_TRANSCRIPT =
 
 const allowedOrigins = [
   'https://elearning-for-kids.onrender.com',
-  'https://india-therapist-chatbot.onrender.com',
+  // 'https://india-therapist-chatbot.onrender.com',
   'http://localhost:3000',
   'http://localhost:5173'
 ];
