@@ -1089,17 +1089,81 @@
 }
 
       sendBtn.addEventListener('click', sendAudio);
+
+    
+// --- Make a live “assistant” bubble and auto-scroll as it grows ---
+function createStreamingAssistantBubble() {
+  const threadEl = document.getElementById('chatThread');
+  const div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.textContent = '';
+  threadEl.appendChild(div);
+  // auto-scroll
+  const observer = new MutationObserver(() => {
+    threadEl.scrollTop = threadEl.scrollHeight;
+  });
+  observer.observe(div, { childList: true, characterData: true, subtree: true });
+  return { el: div, observer };
+}
+function appendDelta(bubble, delta) {
+  bubble.el.textContent += delta;
+}
+
+// --- Generic SSE reader that supports JSON events and raw-token streams ---
+async function readSSEStream(res, onEvent) {
+  if (!res || !res.body) throw new Error('No response body to read');
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+
+    // Split by double newline per SSE framing
+    const frames = buf.split('\n\n');
+    buf = frames.pop() || '';
+
+    for (const frame of frames) {
+      // Expect lines beginning with "data: "
+      const lines = frame.split('\n')
+        .map(l => l.replace(/^data:\s?/, ''))
+        .filter(Boolean);
+
+      for (const line of lines) {
+        // Try JSON first (our server sends {type,...})
+        let evt = null;
+        try { evt = JSON.parse(line); } catch { /* not JSON */ }
+        if (evt) { onEvent(evt); continue; }
+
+        // Fallback: treat as raw token stream
+        onEvent({ type: 'delta', delta: line });
+      }
+    }
+  }
+}
+
+
       // ---------- Typed text send ----------
       // 
-      async function sendText() {
+<script>
+async function sendText() {
   if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
   const textVal = textInput.value.trim();
   if (!textVal) { statusEl.textContent = "Please type something first."; return; }
   if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
 
+  // UI prep
   player.style.display = 'none';
   loadingBar.style.display = 'block';
   statusEl.textContent = "";
+
+  // Immediately show the user's bubble in the thread
+  appendTurnToChat(textVal, null);
+
+  // Create a live assistant bubble to stream into
+  const bubble = createStreamingAssistantBubble();
 
   const body = {
     text: textVal,
@@ -1112,7 +1176,7 @@
 
   try {
     const headers = Object.assign(
-      { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+      { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' }, // tells server to stream
       await getAuthHeader()
     );
 
@@ -1122,27 +1186,64 @@
       body: JSON.stringify(body)
     });
 
-    let assistantText = "";
-    await readSSEStream(res, (token) => {
-      assistantText += token;
-      answerEl.textContent = assistantText;    // live update
-      statusEl.textContent = 'Thinking…';
+    if (!res.ok) {
+      loadingBar.style.display = 'none';
+      let msg = 'Request failed';
+      try { msg = (await res.json())?.message || msg; } catch {}
+      statusEl.textContent = msg;
+      return;
+    }
+
+    let assistantFull = '';
+
+    await readSSEStream(res, (evt) => {
+      switch (evt.type) {
+        case 'delta': {
+          const d = evt.delta || '';
+          assistantFull += d;
+          appendDelta(bubble, d);
+          statusEl.textContent = 'Thinking…';
+          break;
+        }
+        case 'message_end':
+          // text finished (server may still send TTS next)
+          break;
+        case 'tts':
+          if (evt.audioBase64) {
+            player.src = 'data:audio/mpeg;base64,' + evt.audioBase64;
+            player.style.display = 'block';
+          }
+          break;
+        case 'warn':
+          console.warn('[server warn]', evt.message);
+          break;
+        case 'done': {
+          // finalize: save the assistant turn to storage/Firestore and update UI
+          appendTurnToChat(null, assistantFull);
+          transcriptEl.textContent = textVal;
+          answerEl.textContent     = assistantFull;
+          loadingBar.style.display = 'none';
+          updateSuggestions();
+          statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
+          textInput.value = '';
+          validateLangs();
+          break;
+        }
+        case 'error':
+          throw new Error(evt.message || 'Stream error');
+        default:
+          // unknown event; ignore
+          break;
+      }
     });
 
-    appendTurnToChat(textVal, assistantText);
-    transcriptEl.textContent = textVal;
-
-    loadingBar.style.display = 'none';
-    updateSuggestions();
-    statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-    textInput.value = '';
-    validateLangs();
   } catch (e) {
     console.error(e);
     loadingBar.style.display = 'none';
     statusEl.textContent = "Network error. Try again.";
   }
 }
+
 
       sendTextBtn.addEventListener('click', sendText);
       textInput.addEventListener('keypress', (e) => {
