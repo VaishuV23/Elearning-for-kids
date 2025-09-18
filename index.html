@@ -959,107 +959,191 @@
           return {};
         }
       }
+      async function readSSEStream(res, onToken) {
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Split on double newlines (SSE event separation)
+    let parts = buffer.split("\n\n");
+    buffer = parts.pop(); // last (maybe partial) chunk kept in buffer
+
+    for (const chunk of parts) {
+      // Each line typically starts with "data: "
+      const lines = chunk.split("\n").map(l => l.replace(/^data:\s?/, ""));
+      const data = lines.join("\n");
+
+      if (data === "[END]") return;      // server’s end marker
+      if (data) onToken(data);            // incremental token
+    }
+  }
+}
+
+      // async function sendAudio() {
+      //   if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
+      //   if (!lastBlob) { statusEl.textContent = "Please record something first."; return; }
+      //   if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
+      //   // Hide previous audio player
+      //   player.style.display = 'none';
+      //   loadingBar.style.display = 'block';
+      //   statusEl.textContent = "";
+      //   const fd = new FormData();
+      //   fd.append('audio', lastBlob, 'speech.webm');
+      //   fd.append('speakLanguage',  speakLangSel.value);
+      //   fd.append('answerLanguage', answerLangSel.value);
+      //   fd.append('conversationId', currentChatId);
+      //   fd.append('history', JSON.stringify(getHistoryForCurrentChat(6)));
+      //   fd.append('uid', window.__auth.user.uid);
+      //   try {
+      //     const headers = await getAuthHeader();
+      //     const res = await fetch(`${API_BASE}/api/ask`, { method: 'POST', body: fd, headers });
+      //     const json = await res.json();
+      //     if (!res.ok) {
+      //       loadingBar.style.display = 'none';
+      //       statusEl.textContent = json?.message || json?.error || 'Request failed';
+      //       return;
+      //     }
+      //     const { transcript, text, audioBase64 } = json;
+      //     appendTurnToChat(transcript || "", text || "");
+      //     // update transcript/answer (not visible but for reference)
+      //     transcriptEl.textContent = transcript || '—';
+      //     answerEl.textContent     = text || '—';
+      //     if (audioBase64) {
+      //       player.src = 'data:audio/mpeg;base64,' + audioBase64;
+      //       player.style.display = 'block';
+      //     } else {
+      //       player.removeAttribute('src');
+      //       player.style.display = 'none';
+      //     }
+      //     loadingBar.style.display = 'none';
+      //     // Show suggestions for next prompt
+      //     updateSuggestions();
+      //     statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
+      //     lastBlob = null;
+      //     recordBtn.textContent = "🎙️";
+      //     recordBtn.classList.remove('recording');
+      //     sendBtn.disabled = true;
+      //     pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
+      //   } catch (e) {
+      //     console.error(e);
+      //     loadingBar.style.display = 'none';
+      //     statusEl.textContent = "Network error. Try again.";
+      //   }
+      // }
       async function sendAudio() {
-        if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
-        if (!lastBlob) { statusEl.textContent = "Please record something first."; return; }
-        if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
-        // Hide previous audio player
-        player.style.display = 'none';
-        loadingBar.style.display = 'block';
-        statusEl.textContent = "";
-        const fd = new FormData();
-        fd.append('audio', lastBlob, 'speech.webm');
-        fd.append('speakLanguage',  speakLangSel.value);
-        fd.append('answerLanguage', answerLangSel.value);
-        fd.append('conversationId', currentChatId);
-        fd.append('history', JSON.stringify(getHistoryForCurrentChat(6)));
-        fd.append('uid', window.__auth.user.uid);
-        try {
-          const headers = await getAuthHeader();
-          const res = await fetch(`${API_BASE}/api/ask`, { method: 'POST', body: fd, headers });
-          const json = await res.json();
-          if (!res.ok) {
-            loadingBar.style.display = 'none';
-            statusEl.textContent = json?.message || json?.error || 'Request failed';
-            return;
-          }
-          const { transcript, text, audioBase64 } = json;
-          appendTurnToChat(transcript || "", text || "");
-          // update transcript/answer (not visible but for reference)
-          transcriptEl.textContent = transcript || '—';
-          answerEl.textContent     = text || '—';
-          if (audioBase64) {
-            player.src = 'data:audio/mpeg;base64,' + audioBase64;
-            player.style.display = 'block';
-          } else {
-            player.removeAttribute('src');
-            player.style.display = 'none';
-          }
-          loadingBar.style.display = 'none';
-          // Show suggestions for next prompt
-          updateSuggestions();
-          statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-          lastBlob = null;
-          recordBtn.textContent = "🎙️";
-          recordBtn.classList.remove('recording');
-          sendBtn.disabled = true;
-          pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
-        } catch (e) {
-          console.error(e);
-          loadingBar.style.display = 'none';
-          statusEl.textContent = "Network error. Try again.";
-        }
-      }
+  if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
+  if (!lastBlob) { statusEl.textContent = "Please record something first."; return; }
+  if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
+
+  player.style.display = 'none';
+  loadingBar.style.display = 'block';
+  statusEl.textContent = "";
+
+  const fd = new FormData();
+  fd.append('audio', lastBlob, 'speech.webm');
+  fd.append('speakLanguage',  speakLangSel.value);
+  fd.append('answerLanguage', answerLangSel.value);
+  fd.append('conversationId', currentChatId);
+  fd.append('history', JSON.stringify(getHistoryForCurrentChat(6)));
+  fd.append('uid', window.__auth.user.uid);
+
+  try {
+    const headers = await getAuthHeader();
+    // IMPORTANT: do NOT set Content-Type manually for FormData
+    const res = await fetch(`${API_BASE}/api/ask`, {
+      method: 'POST',
+      headers: { ...headers, 'Accept': 'text/event-stream' },
+      body: fd
+    });
+
+    let assistantText = "";
+    await readSSEStream(res, (token) => {
+      assistantText += token;
+      answerEl.textContent = assistantText;        // live update
+      statusEl.textContent = 'Thinking…';
+    });
+
+    // Save turn (no transcript returned from server in SSE path; use lastBlob marker)
+    const userTextPseudo = transcriptEl.textContent || "(voice message)";
+    appendTurnToChat(userTextPseudo, assistantText);
+
+    loadingBar.style.display = 'none';
+    updateSuggestions();
+    statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
+    lastBlob = null;
+    recordBtn.textContent = "🎙️";
+    recordBtn.classList.remove('recording');
+    sendBtn.disabled = true;
+    pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
+  } catch (e) {
+    console.error(e);
+    loadingBar.style.display = 'none';
+    statusEl.textContent = "Network error. Try again.";
+  }
+}
+
       sendBtn.addEventListener('click', sendAudio);
       // ---------- Typed text send ----------
+      // 
       async function sendText() {
-        if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
-        const textVal = textInput.value.trim();
-        if (!textVal) { statusEl.textContent = "Please type something first."; return; }
-        if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
-        // Hide previous audio player
-        player.style.display = 'none';
-        loadingBar.style.display = 'block';
-        statusEl.textContent = "";
-        const body = {
-          text: textVal,
-          speakLanguage: speakLangSel.value,
-          answerLanguage: answerLangSel.value,
-          conversationId: currentChatId,
-          history: getHistoryForCurrentChat(6),
-          uid: window.__auth.user.uid
-        };
-        try {
-          const headers = Object.assign({ 'Content-Type': 'application/json' }, await getAuthHeader());
-          const res = await fetch(`${API_BASE}/api/ask`, { method: 'POST', body: JSON.stringify(body), headers });
-          const json = await res.json();
-          if (!res.ok) {
-            loadingBar.style.display = 'none';
-            statusEl.textContent = json?.message || json?.error || 'Request failed';
-            return;
-          }
-          const { transcript, text: aiText, audioBase64 } = json;
-          appendTurnToChat(textVal, aiText || "");
-          transcriptEl.textContent = textVal;
-          answerEl.textContent     = aiText || '—';
-          if (audioBase64) {
-            player.src = 'data:audio/mpeg;base64,' + audioBase64;
-            player.style.display = 'block';
-          } else {
-            player.removeAttribute('src');
-            player.style.display = 'none';
-          }
-          loadingBar.style.display = 'none';
-          updateSuggestions();
-          statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-          textInput.value = '';
-          validateLangs();
-        } catch (e) {
-          console.error(e);
-          loadingBar.style.display = 'none';
-          statusEl.textContent = "Network error. Try again.";
-        }
-      }
+  if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
+  const textVal = textInput.value.trim();
+  if (!textVal) { statusEl.textContent = "Please type something first."; return; }
+  if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
+
+  player.style.display = 'none';
+  loadingBar.style.display = 'block';
+  statusEl.textContent = "";
+
+  const body = {
+    text: textVal,
+    speakLanguage: speakLangSel.value,
+    answerLanguage: answerLangSel.value,
+    conversationId: currentChatId,
+    history: getHistoryForCurrentChat(6),
+    uid: window.__auth.user.uid
+  };
+
+  try {
+    const headers = Object.assign(
+      { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+      await getAuthHeader()
+    );
+
+    const res = await fetch(`${API_BASE}/api/ask`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    let assistantText = "";
+    await readSSEStream(res, (token) => {
+      assistantText += token;
+      answerEl.textContent = assistantText;    // live update
+      statusEl.textContent = 'Thinking…';
+    });
+
+    appendTurnToChat(textVal, assistantText);
+    transcriptEl.textContent = textVal;
+
+    loadingBar.style.display = 'none';
+    updateSuggestions();
+    statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
+    textInput.value = '';
+    validateLangs();
+  } catch (e) {
+    console.error(e);
+    loadingBar.style.display = 'none';
+    statusEl.textContent = "Network error. Try again.";
+  }
+}
+
       sendTextBtn.addEventListener('click', sendText);
       textInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
