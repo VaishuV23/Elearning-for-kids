@@ -109,11 +109,19 @@ app.post('/api/ask', upload.single('audio'), async (req, res) => {
 
   // Small helper for CORS echo (useful for SSE over some hosts)
   const origin = req.headers.origin;
-  if (origin && allowedOrigins?.includes?.(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  }
+if (origin && allowedOrigins.includes(origin)) {
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,POST,OPTIONS'
+  );
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+}
+
 
   try {
     // -------- Parse inputs (multipart/form-data or JSON) --------
