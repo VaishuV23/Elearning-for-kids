@@ -34,7 +34,7 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  
+  "https://india-therapist-chatbot.onrender.com",
   "https://krishnan-govindan.github.io",
   "https://elearning-for-kids.onrender.com",
 ];
