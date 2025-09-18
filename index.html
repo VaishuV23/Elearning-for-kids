@@ -655,7 +655,7 @@
       // Update the language label when selections change
       const speakSelect = document.getElementById('speakLang');
       const answerSelect = document.getElementById('answerLang');
-      function updateLangLabel() {
+      window.updateLangLabel =function updateLangLabel() {
         const speak = speakSelect.value || 'Speaking';
         const ans   = answerSelect.value || 'Answer';
         langLabel.textContent = speak + ' → ' + ans;
