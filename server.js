@@ -34,9 +34,9 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://coachkrishnangovindan.github.io", // add if you use this GH Pages domain
+  
   "https://krishnan-govindan.github.io",
-  "https://india-therapist-chatbot.onrender.com",
+  "https://elearning-for-kids.onrender.com",
 ];
 
 const corsOptions = {
