@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: kid-speak-learn
+    env: node
+    plan: free
+    branch: main
+    buildCommand: "npm ci"
+    startCommand: "node server.js"
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: OPENAI_API_KEY
+        sync: false   # set in the Render dashboard (don’t commit)
