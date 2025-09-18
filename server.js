@@ -29,30 +29,32 @@ const CLEAN_TRANSCRIPT =
   String(process.env.CLEAN_TRANSCRIPT || "false").toLowerCase() === "true";
 
 // ---- CORS (must be before any routes/middleware) ----
+
+// ---- at the top, after your requires ----
+const cors = require('cors');
+
 const allowedOrigins = [
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "https://india-therapist-chatbot.onrender.com",
-  "https://krishnan-govindan.github.io",
-  "https://elearning-for-kids.onrender.com",
+  'https://elearning-for-kids.onrender.com',
+  'https://india-therapist-chatbot.onrender.com',
+  'http://localhost:3000',
+  'http://localhost:5173'
 ];
 
-const corsOptions = {
-  origin(origin, cb) {
-    if (!origin) return cb(null, true);            // allow curl/Postman (no CORS)
-    const ok = allowedOrigins.includes(origin);
-    return cb(ok ? null : new Error("CORS blocked"), ok);
-  },
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: false,
-};
+app.use(cors({
+  origin: allowedOrigins,                     // array is OK
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
 
-// apply SAME options for normal & preflight
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// make sure *all* OPTIONS get handled
+app.options('*', cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
 
 // helpful for caches/CDNs
 app.use((req, res, next) => {
