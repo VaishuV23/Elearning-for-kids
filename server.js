@@ -31,7 +31,6 @@ const CLEAN_TRANSCRIPT =
 // ---- CORS (must be before any routes/middleware) ----
 
 // ---- at the top, after your requires ----
-const cors = require('cors');
 
 const allowedOrigins = [
   'https://elearning-for-kids.onrender.com',
