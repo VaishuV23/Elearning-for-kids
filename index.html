@@ -476,9 +476,13 @@
         </div>
         <div style="flex:1; overflow-y:auto; padding: 1rem;">
           <div class="chat-list-header">
-            <h3 style="font-size:.9rem; font-weight:600; color: var(--muted); margin:0;">Recent Chats</h3>
-            <button id="newChatBtn" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">➕</button>
-          </div>
+  <h3 style="font-size:.9rem; font-weight:600; color: var(--muted); margin:0;">Recent Chats</h3>
+  <div style="display:flex; gap:.4rem;">
+    <button id="newChatBtn" title="New chat" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">➕</button>
+    <button id="clearAllBtn" title="Delete all chats" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+  </div>
+</div>
+
           <div id="chatList" class="chatlist" style="display:flex; flex-direction:column; gap:.5rem;"></div>
         </div>
         <div class="user-profile">
@@ -779,6 +783,68 @@
         if (idx>=0){ list[idx]=chat; } else { list.unshift(chat); }
         saveAllChats(list);
       }
+      function deleteChat(id) {
+  if (!id) return;
+  if (!confirm('Delete this chat? This cannot be undone.')) return;
+
+  // 1) local storage removal
+  const list = loadAllChats().filter(c => c.id !== id);
+  saveAllChats(list);
+
+  // 2) Firestore removal (best-effort)
+  const user = window.__auth?.user;
+  if (user) {
+    deleteFirestoreChat(user.uid, id).catch(e => console.warn('Firestore delete failed:', e));
+  }
+
+  // 3) fix current selection
+  if (currentChatId === id) {
+    if (list.length) {
+      currentChatId = list[0].id;
+      loadChat(currentChatId);
+    } else {
+      // No chats left — create a fresh one
+      const c = createChat();
+      loadChat(c.id);
+    }
+  } else {
+    renderChatList();
+  }
+
+  // UI status
+  statusEl.textContent = 'Chat deleted.';
+}
+      function deleteAllChats() {
+  if (!confirm('Delete ALL chats? This cannot be undone.')) return;
+
+  // local wipe
+  saveAllChats([]);
+
+  // Firestore wipe (best-effort)
+  const user = window.__auth?.user;
+  if (user) {
+    // get all chats from Firestore and delete
+    (async () => {
+      try {
+        const { db, collection, getDocs } = window.__db;
+        const chatsCol = collection(db, 'users', user.uid, 'chats');
+        const snap = await getDocs(chatsCol);
+        for (const docSnap of snap.docs) {
+          await deleteFirestoreChat(user.uid, docSnap.id);
+        }
+      } catch (e) {
+        console.warn('Firestore clear all failed:', e);
+      }
+    })();
+  }
+
+  // reset UI
+  const c = createChat();
+  loadChat(c.id);
+  statusEl.textContent = 'All chats cleared.';
+}
+
+
       function setTitleIfEmpty(chat, firstUserText){
         if (!firstUserText) return;
         if (chat.title==="New chat" || !chat.title){
@@ -823,6 +889,25 @@
           }
         } catch (e) { console.error('Failed to save turn to Firestore', e); }
       }
+      async function deleteFirestoreChat(uid, chatId) {
+  const { db, collection, getDocs, doc } = window.__db;
+  // Delete subcollection messages in small batches
+  const msgsCol = collection(db, 'users', uid, 'chats', chatId, 'messages');
+  const snap = await getDocs(msgsCol);
+  const batchDeletes = [];
+  snap.forEach(m => batchDeletes.push(m.ref.delete ? m.ref.delete() : null));
+  await Promise.all(batchDeletes);
+
+  // Delete chat doc itself
+  const chatRef = doc(db, 'users', uid, 'chats', chatId);
+  try { await (await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js')).deleteDoc(chatRef); }
+  catch (e) {
+    // Older SDK import pattern fallback
+    const { deleteDoc } = window.__db;
+    await deleteDoc(chatRef);
+  }
+}
+
       // ---------- UI: render chat list ----------
       let currentChatId = null;
       function renderChatList(){
@@ -833,8 +918,16 @@
           div.className = "chatitem" + (chat.id===currentChatId ? " active":"");
           const d = new Date(chat.createdAt);
           const when = d.toLocaleDateString() + " " + d.toLocaleTimeString();
-          div.innerHTML = `<div style="font-weight:600">${chat.title}</div><div style="font-size:.85rem;color:#666">${when}</div>`;
-          div.onclick = ()=>loadChat(chat.id);
+          div.innerHTML = `
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem;">
+    <div>
+      <div style="font-weight:600">${chat.title}</div>
+      <div style="font-size:.85rem;color:#666">${when}</div>
+    </div>
+    <button class="chat-del" title="Delete this chat" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">🗑️</button>
+  </div>
+`;
+
           chatList.appendChild(div);
         });
       }
@@ -875,6 +968,9 @@
         const c = createChat();
         loadChat(c.id);
       });
+      const clearAllBtn = document.getElementById('clearAllBtn');
+clearAllBtn.addEventListener('click', deleteAllChats);
+
       // ---------- Recording (same as before with Pause/Resume) ----------
       let mediaRecorder, chunks = [], isRecording = false, startTs = 0, tickInt = null, lastBlob = null;
       function validateLangs() {
