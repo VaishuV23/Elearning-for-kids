@@ -927,6 +927,13 @@
     <button class="chat-del" title="Delete this chat" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">🗑️</button>
   </div>
 `;
+          div.onclick = () => loadChat(chat.id);
+    const delBtn = div.querySelector('.chat-del');
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteChat(chat.id);
+    });
+
 
           chatList.appendChild(div);
         });
@@ -1318,6 +1325,7 @@ async function sendText() {
   if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
 
   // UI prep
+  textInput.value = "";
   player.style.display = 'none';
   loadingBar.style.display = 'block';
   statusEl.textContent = "";
