@@ -1055,32 +1055,59 @@
 
   try {
     const headers = await getAuthHeader();
-    // IMPORTANT: do NOT set Content-Type manually for FormData
     const res = await fetch(`${API_BASE}/api/ask`, {
       method: 'POST',
-      headers: { ...headers, 'Accept': 'text/event-stream' },
+      headers: { ...headers, 'Accept': 'text/event-stream' }, // request SSE
       body: fd
     });
 
-    let assistantText = "";
-    await readSSEStream(res, (token) => {
-      assistantText += token;
-      answerEl.textContent = assistantText;        // live update
-      statusEl.textContent = 'Thinking…';
+    // Create a live assistant bubble to stream into
+    const bubble = createStreamingAssistantBubble();
+    let assistantFull = '';
+    let transcriptShown = false;
+
+    await readSSEStream(res, (evt) => {
+      switch (evt.type) {
+        case 'delta': {
+          const d = evt.delta || '';
+          assistantFull += d;
+          appendDelta(bubble, d);
+          statusEl.textContent = 'Thinking…';
+          break;
+        }
+        case 'message_end':
+          // text finished; TTS may still arrive
+          break;
+        case 'tts':
+          if (evt.audioBase64) {
+            player.src = 'data:audio/mpeg;base64,' + evt.audioBase64;
+            player.style.display = 'block';
+            player.play().catch(err => console.warn("Autoplay blocked:", err));
+          }
+          break;
+        case 'done': {
+          // we don't have exact transcript from server in SSE, so show a placeholder
+          if (!transcriptShown) {
+            transcriptEl.textContent = "(voice message)";
+            transcriptShown = true;
+          }
+          answerEl.textContent = assistantFull;
+          appendTurnToChat(null, assistantFull); // user turn already added via UI
+          loadingBar.style.display = 'none';
+          updateSuggestions();
+          statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
+          lastBlob = null;
+          recordBtn.textContent = "🎙️";
+          recordBtn.classList.remove('recording');
+          sendBtn.disabled = true;
+          pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
+          break;
+        }
+        case 'error':
+          throw new Error(evt.message || 'Stream error');
+      }
     });
 
-    // Save turn (no transcript returned from server in SSE path; use lastBlob marker)
-    const userTextPseudo = transcriptEl.textContent || "(voice message)";
-    appendTurnToChat(userTextPseudo, assistantText);
-
-    loadingBar.style.display = 'none';
-    updateSuggestions();
-    statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-    lastBlob = null;
-    recordBtn.textContent = "🎙️";
-    recordBtn.classList.remove('recording');
-    sendBtn.disabled = true;
-    pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
   } catch (e) {
     console.error(e);
     loadingBar.style.display = 'none';
@@ -1109,6 +1136,7 @@ function appendDelta(bubble, delta) {
   bubble.el.textContent += delta;
 }
 
+// --- Generic SSE reader that supports JSON events and raw-token streams ---
 // --- Generic SSE reader that supports JSON events and raw-token streams ---
 async function readSSEStream(res, onEvent) {
   if (!res || !res.body) throw new Error('No response body to read');
@@ -1143,7 +1171,6 @@ async function readSSEStream(res, onEvent) {
     }
   }
 }
-
 
       // ---------- Typed text send ----------
       // 
