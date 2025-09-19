@@ -226,7 +226,7 @@ if (origin && allowedOrigins.includes(origin)) {
         const stream = await openai.chat.completions.create({
           model: 'gpt-5',
           messages,
-          temperature: 0.3,
+          // temperature: 0.3,
           stream: true
         });
 
