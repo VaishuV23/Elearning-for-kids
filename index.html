@@ -253,6 +253,13 @@
         background: linear-gradient(135deg, #fef3c7, #fde68a);
         border-top-left-radius: 0;
       }
+      /* Markdown formatting for assistant bubbles */
+.msg.assistant :is(p, ul, ol, pre, code, blockquote, h1, h2, h3) { margin: .25rem 0; }
+.msg.assistant pre { padding: .6rem; border-radius: 8px; overflow:auto; background:#1111/4; }
+.msg.assistant code { padding: .1rem .3rem; border-radius: 6px; background:#1111/4; }
+.msg.assistant a { color:#0b62ff; text-decoration:none; }
+.msg.assistant a:hover { text-decoration:underline; }
+
       /* Suggestions */
       #suggestions {
         display: none;
@@ -725,6 +732,15 @@
       }
     </script>
     <!-- Existing application script preserved for chat functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script>
+  function renderMD(mdText) {
+    const normalized = (mdText || "").replace(/\r\n/g, "\n");
+    const html = marked.parse(normalized, { breaks: true, gfm: true });
+    return DOMPurify.sanitize(html);
+  }
+</script>
     <script>
       const API_BASE = "https://elearning-for-kids.onrender.com";
       // ---------- DOM ----------
@@ -1138,18 +1154,27 @@ function createStreamingAssistantBubble() {
   const threadEl = document.getElementById('chatThread');
   const div = document.createElement('div');
   div.className = 'msg assistant';
-  div.textContent = '';
+  // we'll keep a buffer and render markdown as it grows
+  div.__mdBuffer = '';
+  div.innerHTML = '';
   threadEl.appendChild(div);
-  // auto-scroll
+  // auto-scroll while content grows
   const observer = new MutationObserver(() => {
     threadEl.scrollTop = threadEl.scrollHeight;
   });
   observer.observe(div, { childList: true, characterData: true, subtree: true });
   return { el: div, observer };
 }
+
 function appendDelta(bubble, delta) {
-  bubble.el.textContent += delta;
+  bubble.el.__mdBuffer += (delta || '');
+  // Throttle a bit to avoid re-rendering every single token
+  if (bubble.__raf) cancelAnimationFrame(bubble.__raf);
+  bubble.__raf = requestAnimationFrame(() => {
+    bubble.el.innerHTML = renderMD(bubble.el.__mdBuffer);
+  });
 }
+
 
 // --- Generic SSE reader that supports JSON events and raw-token streams ---
 // --- Generic SSE reader that supports JSON events and raw-token streams ---
@@ -1303,11 +1328,20 @@ async function sendText() {
           return;
         }
         chat.messages.forEach(msg => {
-          const div = document.createElement('div');
-          div.className = 'msg ' + (msg.role === 'user' ? 'user' : 'assistant');
-          div.textContent = msg.content;
-          threadEl.appendChild(div);
-        });
+  const div = document.createElement('div');
+  const isAssistant = msg.role !== 'user';
+  div.className = 'msg ' + (isAssistant ? 'assistant' : 'user');
+
+  if (isAssistant) {
+    // assistant: render Markdown
+    div.innerHTML = renderMD(msg.content || "");
+  } else {
+    // user: keep plain text (or use renderMD if you also want formatting)
+    div.textContent = msg.content || "";
+  }
+  threadEl.appendChild(div);
+});
+
         // Scroll to bottom
         setTimeout(() => { threadEl.scrollTop = threadEl.scrollHeight; }, 0);
       }
