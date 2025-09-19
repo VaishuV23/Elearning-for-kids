@@ -40,19 +40,19 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: allowedOrigins,                     // array is OK
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: allowedOrigins,
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','Accept','X-Requested-With'],
   credentials: true,
 }));
 
-// make sure *all* OPTIONS get handled
 app.options('*', cors({
   origin: allowedOrigins,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','Accept','X-Requested-With'],
   credentials: true,
 }));
+
 
 
 // helpful for caches/CDNs
