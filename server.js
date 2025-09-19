@@ -227,6 +227,7 @@ if (origin && allowedOrigins.includes(origin)) {
           model: 'gpt-5',
           messages,
           // temperature: 0.3,
+          
           stream: true
         });
 
