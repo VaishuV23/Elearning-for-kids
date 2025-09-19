@@ -1045,6 +1045,14 @@
   loadingBar.style.display = 'block';
   statusEl.textContent = "";
 
+  // Create a pending user bubble that we will replace with the transcript
+const threadEl = document.getElementById('chatThread');
+const userBubble = document.createElement('div');
+userBubble.className = 'msg user';
+userBubble.textContent = '🎤 (processing transcript…)';
+threadEl.appendChild(userBubble);
+threadEl.scrollTop = threadEl.scrollHeight;
+
   const fd = new FormData();
   fd.append('audio', lastBlob, 'speech.webm');
   fd.append('speakLanguage',  speakLangSel.value);
@@ -1086,23 +1094,30 @@
           }
           break;
         case 'done': {
-          // we don't have exact transcript from server in SSE, so show a placeholder
-          if (!transcriptShown) {
-            transcriptEl.textContent = "(voice message)";
-            transcriptShown = true;
-          }
-          answerEl.textContent = assistantFull;
-          appendTurnToChat(null, assistantFull); // user turn already added via UI
-          loadingBar.style.display = 'none';
-          updateSuggestions();
-          statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-          lastBlob = null;
-          recordBtn.textContent = "🎙️";
-          recordBtn.classList.remove('recording');
-          sendBtn.disabled = true;
-          pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
-          break;
-        }
+  userTranscript = (evt.transcript || '(voice message)').trim();
+
+  // 1) Replace the pending user bubble with real transcript
+  userBubble.textContent = userTranscript;
+
+  // 2) Update hidden transcript/answer boxes
+  transcriptEl.textContent = userTranscript;
+  answerEl.textContent = assistantFull;
+
+  // 3) Save both user + assistant turns (user first, then assistant)
+  appendTurnToChat(userTranscript, assistantFull);
+
+  // 4) Final UI cleanup
+  loadingBar.style.display = 'none';
+  updateSuggestions();
+  statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
+  lastBlob = null;
+  recordBtn.textContent = "🎙️";
+  recordBtn.classList.remove('recording');
+  sendBtn.disabled = true;
+  pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
+  break;
+}
+
         case 'error':
           throw new Error(evt.message || 'Stream error');
       }
