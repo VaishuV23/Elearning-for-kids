@@ -255,6 +255,27 @@ if (origin && allowedOrigins.includes(origin)) {
           send({ type: 'tts_error', message: String(ttsErr?.message || ttsErr) });
         }
 
+        // --- Generate 3 short follow-up suggestions in the selected answer language ---
+let suggestions = [];
+try {
+  const suggestResp = await openai.responses.create({
+    model: 'gpt-5',
+    input: [
+      { role: 'system', content: `You suggest 3 very short follow-up questions in ${answerLanguage}. Use simple words for a child. Return plain text, one per line, no bullets.` },
+      ...messages,
+      { role: 'user', content: 'Suggest 3 follow-up questions for the child.' }
+    ]
+  });
+  const raw = (suggestResp.output_text || '').split('\n');
+  suggestions = raw
+    .map(s => s.replace(/^\d+[.)]\s*/, '').trim())
+    .filter(Boolean)
+    .slice(0, 3);
+} catch (e) {
+  // If suggestions fail, we’ll just skip them; no crash
+}
+
+
         // Firestore logging (best-effort)
         if (adminApp && uid) {
           try {
@@ -281,7 +302,14 @@ if (origin && allowedOrigins.includes(origin)) {
         }
 
         // Final “done” summary for clients that want a single close-out object
-        endWith({ type: 'done', transcript: userText, text: fullAssistantText });
+// Final “done” summary (include suggestions)
+endWith({
+  type: 'done',
+  transcript: userText,
+  text: fullAssistantText,
+  suggestions
+});
+
       } catch (err) {
         endWith({ type: 'error', message: err?.message || 'processing_failed' });
       }
@@ -293,6 +321,25 @@ if (origin && allowedOrigins.includes(origin)) {
     // =====================================================================
     const resp = await openai.responses.create({ model: 'gpt-5', input: messages });
     const assistantText = (resp.output_text || '').trim();
+    // --- Generate 3 short follow-up suggestions in the selected answer language ---
+let suggestions = [];
+try {
+  const suggestResp = await openai.responses.create({
+    model: 'gpt-5',
+    input: [
+      { role: 'system', content: `You suggest 3 very short follow-up questions in ${answerLanguage}. Use simple words for a child. Return plain text, one per line, no bullets.` },
+      ...messages,
+      { role: 'user', content: 'Suggest 3 follow-up questions for the child.' }
+    ]
+  });
+  const raw = (suggestResp.output_text || '').split('\n');
+  suggestions = raw
+    .map(s => s.replace(/^\d+[.)]\s*/, '').trim())
+    .filter(Boolean)
+    .slice(0, 3);
+} catch (e) {
+  // If suggestions fail, we’ll just skip them
+}
 
     let base64Audio = '';
     try {
@@ -336,7 +383,8 @@ if (origin && allowedOrigins.includes(origin)) {
       conversationId,
       transcript: userText,
       text: assistantText,
-      audioBase64: base64Audio
+      audioBase64: base64Audio,
+      suggestions
     });
   } catch (err) {
     const msg = (err?.error?.message || err?.message || '').toLowerCase();
