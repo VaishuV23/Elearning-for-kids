@@ -1227,7 +1227,7 @@ threadEl.scrollTop = threadEl.scrollHeight;
 
   // 4) Final UI cleanup
   loadingBar.style.display = 'none';
-  updateSuggestions();
+  updateSuggestions(evt.suggestions || []);
   statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
   lastBlob = null;
   recordBtn.textContent = "🎙️";
@@ -1394,7 +1394,7 @@ async function sendText() {
           transcriptEl.textContent = textVal;
           answerEl.textContent     = assistantFull;
           loadingBar.style.display = 'none';
-          updateSuggestions();
+          updateSuggestions(evt.suggestions || []);
           statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
           textInput.value = '';
           validateLangs();
@@ -1450,26 +1450,31 @@ async function sendText() {
         setTimeout(() => { threadEl.scrollTop = threadEl.scrollHeight; }, 0);
       }
       // Update suggestions with static example prompts
-      function updateSuggestions() {
-        const suggestionsEl = document.getElementById('suggestions');
-        const prompts = [
-          'Can you give me another example?',
-          'Could you explain this in simpler words?',
-          'What else should I know about this topic?'
-        ];
-        suggestionsEl.innerHTML = '';
-        prompts.forEach(p => {
-          const btn = document.createElement('button');
-          btn.className = 'suggestion-btn';
-          btn.textContent = p;
-          btn.addEventListener('click', () => {
-            textInput.value = p;
-            sendText();
-          });
-          suggestionsEl.appendChild(btn);
-        });
-        suggestionsEl.style.display = 'flex';
-      }
+      // Update suggestions with server-provided prompts (fallback to defaults)
+function updateSuggestions(suggestions = []) {
+  const suggestionsEl = document.getElementById('suggestions');
+  const prompts = (Array.isArray(suggestions) && suggestions.length)
+    ? suggestions
+    : [
+        'Can you give me another example?',
+        'Could you explain this in simpler words?',
+        'What else should I know about this topic?'
+      ];
+
+  suggestionsEl.innerHTML = '';
+  prompts.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'suggestion-btn';
+    btn.textContent = p;
+    btn.addEventListener('click', () => {
+      textInput.value = p;
+      sendText();
+    });
+    suggestionsEl.appendChild(btn);
+  });
+  suggestionsEl.style.display = 'flex';
+}
+
       // Toggle sidebar on mobile
       const toggleBtn = document.getElementById('toggleSidebarBtn');
       const sidebar  = document.getElementById('sidebar');
