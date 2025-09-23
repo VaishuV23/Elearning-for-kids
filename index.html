@@ -481,7 +481,7 @@
   </head>
   <body>
     <!-- Authentication bar: displays sign in/out and user details -->
-    <body>
+   
 
   <!-- Full-screen Auth Screen (shown when logged out) -->
   <section id="authScreen" style="display:none">
@@ -516,6 +516,7 @@
       <span id="userName" class="user-name"></span>
       <span id="userEmail" class="user-email"></span>
     </div>
+     <div id="recaptcha-container"></div>
     <div class="auth-actions">
       <button id="logoutBtn" class="btn-auth" style="padding:.4rem .9rem;border-radius:8px;">
         🚪 Sign out
@@ -525,8 +526,7 @@
 
 
         
-      </div>
-    </div>
+     
     <div id="loginRequired" style="display:none; text-align:center; margin:1rem 0; padding:1rem; border:1px solid var(--bd); border-radius:12px; background:#fff;">
       Please sign in to start using Kid Speak &amp; Learn.
     </div>
@@ -792,9 +792,7 @@ document.getElementById('authBar').style.display = '';
             userPhotoEl.style.display = '';
           } else {
             userPhotoEl.style.display = 'none';
-            document.getElementById('authScreen').style.display = 'grid';
-document.querySelector('.app-container').style.display = 'none';
-document.getElementById('authBar').style.display = 'none'; // hide the old thin bar
+            
 
           }
           loginBtn.style.display  = 'none';
@@ -1763,7 +1761,7 @@ function updateSuggestions(suggestions = []) {
         if (mobileLabel) mobileLabel.textContent = (speakLangSel.value || 'Speaking') + ' → ' + (answerLangSel.value || 'Answer');
       });
     </script>
-    <div id="recaptcha-container"></div>
+   
 
   </body>
 </html>
