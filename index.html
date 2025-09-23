@@ -481,40 +481,48 @@
   </head>
   <body>
     <!-- Authentication bar: displays sign in/out and user details -->
-    <div id="authBar">
-      <div class="user-info">
-        <img id="userPhoto" src="" alt="User" />
-        <span id="userName" class="user-name"></span>
-        <span id="userEmail" class="user-email"></span>
+    <body>
+
+  <!-- Full-screen Auth Screen (shown when logged out) -->
+  <section id="authScreen" style="display:none">
+    <div class="auth-card">
+      <div class="brand">Kid Speak & Learn</div>
+      <h2 class="auth-title">Log in or sign up</h2>
+      <p class="auth-sub">You’ll get smarter responses and can upload audio.</p>
+
+      <div class="auth-stack">
+        <button id="loginBtn"      class="btn-auth btn-google">🔒 Continue with Google</button>
+        <button id="fbLoginBtn"    class="btn-auth btn-facebook">📘 Continue with Facebook</button>
+        <button id="phoneLoginBtn" class="btn-auth btn-phone">📱 Continue with phone</button>
       </div>
-      <div>
-        <!-- Full-screen Auth Screen -->
-<section id="authScreen" style="display:none">
-  <div class="auth-card">
-    <div class="brand">Kid Speak & Learn</div>
-    <h2 class="auth-title">Log in or sign up</h2>
-    <p class="auth-sub">You’ll get smarter responses and can upload audio.</p>
 
-    <div class="auth-stack">
-      <button id="loginBtn"      class="btn-auth btn-google">🔒 Continue with Google</button>
-      <button id="fbLoginBtn"    class="btn-auth btn-facebook">📘 Continue with Facebook</button>
-      <button id="phoneLoginBtn" class="btn-auth btn-phone">📱 Continue with phone</button>
+      <div class="auth-sep"><span>OR</span></div>
+
+      <button id="emailLoginBtn" class="btn-auth btn-email" style="width:100%">
+        ✉️ Continue with email
+      </button>
+
+      <!-- reCAPTCHA root for phone login -->
+      <div id="recaptcha-container" style="margin-top:8px;"></div>
+
+      <p class="auth-foot">By continuing, you agree to our Terms & Privacy.</p>
     </div>
+  </section>
 
-    <div class="auth-sep"><span>OR</span></div>
-
-    <button id="emailLoginBtn" class="btn-auth btn-email" style="width:100%">
-      ✉️ Continue with email
-    </button>
-
-    <!-- reCAPTCHA root for phone login -->
-    <div id="recaptcha-container" style="margin-top:8px;"></div>
-
-    <p class="auth-foot">By continuing, you agree to our Terms & Privacy.</p>
+  <!-- Thin top bar (shown when logged in) -->
+  <div id="authBar" style="display:none">
+    <div class="user-info">
+      <img id="userPhoto" src="" alt="User" />
+      <span id="userName" class="user-name"></span>
+      <span id="userEmail" class="user-email"></span>
+    </div>
+    <div class="auth-actions">
+      <button id="logoutBtn" class="btn-auth" style="padding:.4rem .9rem;border-radius:8px;">
+        🚪 Sign out
+      </button>
+    </div>
   </div>
-</section>
 
-</div>
 
         
       </div>
@@ -742,16 +750,13 @@ emailLoginBtn.addEventListener('click', async () => {
 });
 // Phone login needs reCAPTCHA
 let appVerifier;
-onAuthStateChanged(auth, (u) => {
+onAuthStateChanged(auth, () => {
+  // Only ensure reCAPTCHA exists; do not toggle UI here.
   if (!appVerifier) {
     appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
   }
-  document.getElementById('authScreen').style.display = 'grid';
-document.querySelector('.app-container').style.display = 'none';
-document.getElementById('authBar').style.display = 'none'; // hide the old thin bar
-
-  
 });
+
 
 const phoneLoginBtn = document.getElementById('phoneLoginBtn');
 phoneLoginBtn.addEventListener('click', async () => {
@@ -777,6 +782,9 @@ phoneLoginBtn.addEventListener('click', async () => {
         window.__auth.user = user;
         if (user) {
           // Show user info
+          document.getElementById('authScreen').style.display = 'none';
+document.querySelector('.app-container').style.display = '';
+document.getElementById('authBar').style.display = '';
           userNameEl.textContent  = user.displayName || '';
           userEmailEl.textContent = user.email || '';
           if (user.photoURL) {
