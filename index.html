@@ -684,7 +684,7 @@
       import {getAuth, GoogleAuthProvider, FacebookAuthProvider,signInWithPopup, signOut, onAuthStateChanged, getIdToken,createUserWithEmailAndPassword, signInWithEmailAndPassword,RecaptchaVerifier, signInWithPhoneNumber} from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
 
       // import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getIdToken } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-      import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+      import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
       // Your web app's Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyARKGvFd051nAxe3lXpkcktBHl46NP38A0",
@@ -746,7 +746,7 @@ phoneLoginBtn.addEventListener('click', async () => {
 
       // Expose to global for non-module script
       window.__auth = { auth, getIdToken, user: null };
-      window.__db = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch };
+      window.__db = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc  };
       // Login click handler
       loginBtn.addEventListener('click', async () => {
         try {
@@ -1184,6 +1184,33 @@ window.loadLangPrefs=function loadLangPrefs() {
     await deleteDoc(chatRef);
   }
 }
+      // ----- USER MEMORY (long-term) -----
+// ---- Memory & summary helpers ----
+async function loadUserMemory(uid) {
+  const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+  const ref = doc(db, 'users', uid, 'meta', 'memory');
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : {};
+}
+async function saveUserMemory(uid, patch) {
+  const { db, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+  const ref = doc(db, 'users', uid, 'meta', 'memory');
+  await setDoc(ref, patch, { merge: true });
+}
+
+async function loadChatSummary(uid, chatId) {
+  const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+  const ref = doc(db, 'users', uid, 'chats', chatId);
+  const snap = await getDoc(ref);
+  return snap.exists() ? (snap.data().summary || '') : '';
+}
+async function saveChatSummary(uid, chatId, summary) {
+  const { db, doc, updateDoc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+  const ref = doc(db, 'users', uid, 'chats', chatId);
+  // ensure doc exists, then merge summary
+  try { await updateDoc(ref, { summary, updatedAt: serverTimestamp() }); }
+  catch { await setDoc(ref, { summary, updatedAt: serverTimestamp() }, { merge: true }); }
+}
 
       // ---------- UI: render chat list ----------
       let currentChatId = null;
@@ -1505,13 +1532,27 @@ userBubble.textContent = '🎤 (processing transcript…)';
 threadEl.appendChild(userBubble);
 threadEl.scrollTop = threadEl.scrollHeight;
 
-  const fd = new FormData();
+    const fd = new FormData();
+
+  // 🔹 NEW: load long-term memory + short chat summary
+  const uid = window.__auth.user.uid;
+  const [memory, chatSummary] = await Promise.all([
+    loadUserMemory(uid),                 // { name, speakLanguage, answerLanguage, ... }
+    loadChatSummary(uid, currentChatId)  // short synopsis of this chat
+  ]);
+
+  // existing
   fd.append('audio', lastBlob, 'speech.webm');
   fd.append('speakLanguage',  speakLangSel.value);
   fd.append('answerLanguage', answerLangSel.value);
   fd.append('conversationId', currentChatId);
   fd.append('history', JSON.stringify(getHistoryForCurrentChat(6)));
-  fd.append('uid', window.__auth.user.uid);
+  fd.append('uid', uid);
+
+  // 🔹 NEW: include memory & summary in the request
+  fd.append('memory', JSON.stringify(memory || {}));
+  fd.append('chatSummary', JSON.stringify(chatSummary || ''));
+
 
   try {
     const headers = await getAuthHeader();
@@ -1581,6 +1622,28 @@ threadEl.scrollTop = threadEl.scrollHeight;
     statusEl.textContent = "Network error. Try again.";
   }
 }
+                // 🔹 NEW: heuristics to improve memory
+          const patch = {};
+          if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage = speakLangSel.value;
+          if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage = answerLangSel.value;
+
+          // Try to catch "my name is ___"
+          const m = userTranscript.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i);
+          if (m) patch.name = m[1].trim();
+
+          if (Object.keys(patch).length) {
+            saveUserMemory(uid, patch);
+          }
+
+          // 🔹 NEW: keep/update a short rolling summary for this chat
+          const chat = getChat(currentChatId);
+          if (chat && chat.messages?.length) {
+            const lastK = chat.messages.slice(-8)  // last ~4 turns (user+assistant)
+              .map(m => `${m.role}: ${m.content}`).join('\n');
+            const naiveSummary = (lastK.length > 480 ? lastK.slice(0, 480) + '…' : lastK);
+            saveChatSummary(uid, currentChatId, naiveSummary);
+          }
+
 
       sendBtn.addEventListener('click', sendAudio);
 
@@ -1668,6 +1731,13 @@ async function sendText() {
 
   // Create a live assistant bubble to stream into
   const bubble = createStreamingAssistantBubble();
+    // Fetch per-user memory and per-chat summary
+  const uid = window.__auth.user.uid;
+  const [memory, chatSummary] = await Promise.all([
+    loadUserMemory(uid),
+    loadChatSummary(uid, currentChatId)
+  ]);
+
 
   const body = {
     text: textVal,
@@ -1675,7 +1745,9 @@ async function sendText() {
     answerLanguage: answerLangSel.value,
     conversationId: currentChatId,
     history: getHistoryForCurrentChat(6),
-    uid: window.__auth.user.uid
+    uid: window.__auth.user.uid,
+    memory,              // long-term user profile
+    chatSummary 
   };
 
   try {
@@ -1747,6 +1819,20 @@ async function sendText() {
     statusEl.textContent = "Network error. Try again.";
   }
 }
+       const patch = {};
+          if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage = speakLangSel.value;
+          if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage = answerLangSel.value;
+          const m = textVal.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i);
+          if (m) patch.name = m[1].trim();
+          if (Object.keys(patch).length) saveUserMemory(uid, patch);
+
+          // Keep a short rolling summary for this chat (client-side naive version)
+          const chat = getChat(currentChatId);
+          if (chat && chat.messages?.length) {
+            const lastK = chat.messages.slice(-8).map(m => `${m.role}: ${m.content}`).join('\n');
+            const naiveSummary = (lastK.length > 480 ? lastK.slice(0, 480) + '…' : lastK);
+            saveChatSummary(uid, currentChatId, naiveSummary);
+          }
 
 
       sendTextBtn.addEventListener('click', sendText);
