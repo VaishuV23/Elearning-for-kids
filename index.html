@@ -720,6 +720,30 @@ fbLoginBtn.addEventListener('click', async () => {
   catch (e) { alert('Facebook login failed: ' + (e?.message || e)); }
 });
 
+      const phoneLoginBtn = document.getElementById('phoneLoginBtn');
+phoneLoginBtn.addEventListener('click', async () => {
+  try {
+    const phone = prompt('Enter mobile with country code (e.g. +91XXXXXXXXXX):');
+    if (!phone) return;
+    const verifier = ensureRecaptcha();      // <- initialize (once)
+    const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
+    const code = prompt('Enter the 6-digit OTP you received:');
+    if (!code) return;
+    await confirmation.confirm(code);
+  } catch (e) {
+    // Common errors clarified for you in the UI:
+    if (String(e.message || e).includes('captcha')) {
+      alert('reCAPTCHA failed. Make sure the page is served over HTTPS and try again.');
+    } else if (String(e.code).includes('auth/too-many-requests')) {
+      alert('Too many attempts. Wait a few minutes and try again.');
+    } else {
+      alert('Phone sign-in failed: ' + (e?.message || e));
+    }
+    // Optional: reset the verifier if it got stuck
+    try { appVerifier = null; } catch {}
+  }
+});
+
       // Expose to global for non-module script
       window.__auth = { auth, getIdToken, user: null };
       window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs };
