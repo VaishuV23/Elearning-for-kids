@@ -679,7 +679,7 @@ function saveLangPrefs() {
   };
   localStorage.setItem(LANG_KEY, JSON.stringify(data));
 }
-function loadLangPrefs() {
+window.loadLangPrefs=function loadLangPrefs() {
   try {
     const data = JSON.parse(localStorage.getItem(LANG_KEY));
     if (!data) return;
@@ -1043,7 +1043,7 @@ clearAllBtn.addEventListener('click', deleteAllChats);
           mediaRecorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'audio/webm' });
             lastBlob = blob;
-            iif (blob.size < 5000) {
+            if (blob.size < 5000) {
   statusEl.textContent = 'Too short. Record at least 1 second.';
   sendBtn.disabled = true;
   voiceActions.style.display = 'none';   // <--- HIDE actions
