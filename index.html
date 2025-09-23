@@ -750,6 +750,21 @@ emailLoginBtn.addEventListener('click', async () => {
 });
 // Phone login needs reCAPTCHA
 // One single, unified auth state handler
+   function enableAppControls(enabled) {
+  textInput.disabled   = !enabled;
+  recordBtn.disabled   = !enabled || !validateLangs();
+  sendBtn.disabled     = true; // only enabled after a recording exists
+  sendTextBtn.disabled = !enabled || !textInput.value.trim() || !validateLangs();
+
+  try { pauseBtn.disabled = !enabled; } catch {}
+  try { document.getElementById('toggleSidebarBtn').disabled = !enabled; } catch {}
+
+  if (!enabled) {
+    try { player.pause(); player.removeAttribute('src'); player.load(); } catch {}
+    try { lastBlob = null; } catch {}
+    try { document.getElementById('voiceActions').style.display = 'none'; } catch {}
+  }
+} 
 let appVerifier; // reCAPTCHA verifier (created once)
 
 onAuthStateChanged(auth, async (user) => {
