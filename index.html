@@ -563,6 +563,10 @@
             <button id="sendTextBtn" title="Send text" disabled>➤</button>
             <span id="timer">00:00</span>
           </div>
+          <div id="voiceActions" style="display:none; gap:.5rem; margin-top:.5rem;">
+  <button id="voiceSendBtn"  title="Send recording">📤 Send</button>
+  <button id="voiceDiscardBtn" title="Discard recording">🗑️ Delete</button>
+</div>
         </div>
       </main>
     </div>
@@ -666,6 +670,33 @@
       // Update the language label when selections change
       const speakSelect = document.getElementById('speakLang');
       const answerSelect = document.getElementById('answerLang');
+      // ---- Language persistence (localStorage) ----
+const LANG_KEY = "kid_lang_v1";
+function saveLangPrefs() {
+  const data = {
+    speak: speakSelect.value || "",
+    answer: answerSelect.value || ""
+  };
+  localStorage.setItem(LANG_KEY, JSON.stringify(data));
+}
+function loadLangPrefs() {
+  try {
+    const data = JSON.parse(localStorage.getItem(LANG_KEY));
+    if (!data) return;
+    if (data.speak) {
+      speakSelect.value = data.speak;
+      const mobileSpeakSel = document.getElementById('mobileSpeakLang');
+      if (mobileSpeakSel) mobileSpeakSel.value = data.speak;
+    }
+    if (data.answer) {
+      answerSelect.value = data.answer;
+      const mobileAnsSel = document.getElementById('mobileAnswerLang');
+      if (mobileAnsSel) mobileAnsSel.value = data.answer;
+    }
+    updateLangLabel();
+  } catch {}
+}
+
       window.updateLangLabel =function updateLangLabel() {
         const speak = speakSelect.value || 'Speaking';
         const ans   = answerSelect.value || 'Answer';
@@ -684,6 +715,7 @@
         }
         updateLangLabel();
         validateLangs();
+        saveLangPrefs();
       });
       answerSelect.addEventListener('change', () => {
         // sync mobile select when desktop select changes
@@ -693,6 +725,7 @@
         }
         updateLangLabel();
         validateLangs();
+        saveLangPrefs();
       });
 
       // Mobile language selector logic
@@ -1010,13 +1043,16 @@ clearAllBtn.addEventListener('click', deleteAllChats);
           mediaRecorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'audio/webm' });
             lastBlob = blob;
-            if (blob.size < 5000) {
-              statusEl.textContent = 'Too short. Record at least 1 second.';
-              sendBtn.disabled = true;
-            } else {
-              statusEl.textContent = 'Recording saved. Now tap “Send”.';
-              sendBtn.disabled = !validateLangs();
-            }
+            iif (blob.size < 5000) {
+  statusEl.textContent = 'Too short. Record at least 1 second.';
+  sendBtn.disabled = true;
+  voiceActions.style.display = 'none';   // <--- HIDE actions
+} else {
+  statusEl.textContent = 'Recording saved. Tap Send or Delete.';
+  sendBtn.disabled = !validateLangs();
+  voiceActions.style.display = 'flex';   // <--- SHOW actions
+}
+
           };
           mediaRecorder.start();
           isRecording = true;
@@ -1035,6 +1071,59 @@ clearAllBtn.addEventListener('click', deleteAllChats);
         }
       }
       recordBtn.addEventListener('click', toggleRecording);
+      // --- Long-press recording (WhatsApp style) ---
+let pressTimer = null;
+let didStartByLongPress = false;
+
+function startRecordingNow() {
+  didStartByLongPress = true;
+  if (!isRecording) toggleRecording();
+}
+function stopRecordingNow() {
+  if (isRecording) toggleRecording();
+}
+function handlePressStart(e) {
+  if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
+  if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
+  e.preventDefault();
+  didStartByLongPress = false;
+  pressTimer = setTimeout(startRecordingNow, 300);
+}
+function handlePressEnd(e) {
+  e.preventDefault();
+  clearTimeout(pressTimer); pressTimer = null;
+  if (didStartByLongPress) {
+    stopRecordingNow();
+  }
+}
+function handlePressCancel() {
+  clearTimeout(pressTimer); pressTimer = null;
+}
+
+// Desktop + Mobile
+recordBtn.addEventListener('mousedown', handlePressStart);
+recordBtn.addEventListener('mouseup', handlePressEnd);
+recordBtn.addEventListener('mouseleave', handlePressCancel);
+recordBtn.addEventListener('touchstart', handlePressStart, { passive:false });
+recordBtn.addEventListener('touchend', handlePressEnd);
+recordBtn.addEventListener('touchcancel', handlePressCancel);
+
+// Voice action buttons
+const voiceActions = document.getElementById('voiceActions');
+const voiceSendBtn = document.getElementById('voiceSendBtn');
+const voiceDiscardBtn = document.getElementById('voiceDiscardBtn');
+
+voiceSendBtn.addEventListener('click', async () => {
+  await sendAudio();
+  voiceActions.style.display = 'none';
+});
+voiceDiscardBtn.addEventListener('click', () => {
+  lastBlob = null;
+  sendBtn.disabled = true;
+  statusEl.textContent = 'Recording discarded.';
+  voiceActions.style.display = 'none';
+});
+
       pauseBtn.addEventListener('click', () => {
         if (!mediaRecorder) return;
         if (mediaRecorder.state === 'recording') {
@@ -1490,6 +1579,7 @@ function updateSuggestions(suggestions = []) {
       });
       // On boot load first chat (if exists) after auth loaded
       window.addEventListener('load', () => {
+        loadLangPrefs();
         const all = loadAllChats();
         if (all.length > 0) loadChat(all[0].id);
         validateLangs();
