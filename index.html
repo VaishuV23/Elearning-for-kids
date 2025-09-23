@@ -684,7 +684,7 @@
       import {getAuth, GoogleAuthProvider, FacebookAuthProvider,signInWithPopup, signOut, onAuthStateChanged, getIdToken,createUserWithEmailAndPassword, signInWithEmailAndPassword,RecaptchaVerifier, signInWithPhoneNumber} from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
 
       // import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getIdToken } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-      import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+      import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
       // Your web app's Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyARKGvFd051nAxe3lXpkcktBHl46NP38A0",
@@ -746,7 +746,7 @@ phoneLoginBtn.addEventListener('click', async () => {
 
       // Expose to global for non-module script
       window.__auth = { auth, getIdToken, user: null };
-      window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs };
+      window.__db = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch };
       // Login click handler
       loginBtn.addEventListener('click', async () => {
         try {
@@ -1108,36 +1108,64 @@ window.loadLangPrefs=function loadLangPrefs() {
           await setDoc(chatRef, { title, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), lastSnippet: '' }, { merge:true });
         } catch (e) { console.error('Failed to create chat in Firestore', e); }
       }
-      async function saveTurnToFirestore(uid, chatId, userText, assistantText, speakLang, answerLang){
-        const { db, collection, addDoc, serverTimestamp, doc, updateDoc } = window.__db;
-        try {
-          const msgsCol = collection(db, 'users', uid, 'chats', chatId, 'messages');
-          if (userText) {
-            await addDoc(msgsCol, {
-              role: 'user',
-              content: userText,
-              speakLanguage: speakLang,
-              answerLanguage: answerLang,
-              createdAt: serverTimestamp()
-            });
-          }
-          if (assistantText) {
-            await addDoc(msgsCol, {
-              role: 'assistant',
-              content: assistantText,
-              speakLanguage: speakLang,
-              answerLanguage: answerLang,
-              createdAt: serverTimestamp()
-            });
-            // update chat metadata
-            const chatRef = doc(db, 'users', uid, 'chats', chatId);
-            await updateDoc(chatRef, {
-              updatedAt: serverTimestamp(),
-              lastSnippet: assistantText.slice(0,120)
-            });
-          }
-        } catch (e) { console.error('Failed to save turn to Firestore', e); }
-      }
+      async function saveTurnToFirestore(uid, chatId, userText, assistantText, speakLang, answerLang) {
+  const { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, increment, writeBatch } = window.__db;
+  try {
+    const chatRef = doc(db, 'users', uid, 'chats', chatId);
+    const msgsCol = collection(db, 'users', uid, 'chats', chatId, 'messages');
+
+    // Create the chat doc if it doesn't exist yet (title defaults to first user text)
+    await setDoc(chatRef, {
+      title: (userText && userText.trim()) ? userText.trim().slice(0, 40) + (userText.trim().length > 40 ? '…' : '') : 'Chat',
+      createdAt: serverTimestamp(),
+    }, { merge: true });
+
+    const batch = writeBatch(db);
+    let wroteCount = 0;
+
+    if (userText) {
+      // Use addDoc for auto-ID, but add it via batch by pre-creating a doc ref
+      const userMsgRef = doc(msgsCol); // auto-id
+      batch.set(userMsgRef, {
+        role: 'user',
+        content: userText,
+        speakLanguage: speakLang,
+        answerLanguage: answerLang,
+        createdAt: serverTimestamp()
+      });
+      wroteCount++;
+    }
+
+    if (assistantText) {
+      const asstMsgRef = doc(msgsCol);
+      batch.set(asstMsgRef, {
+        role: 'assistant',
+        content: assistantText,
+        speakLanguage: speakLang,
+        answerLanguage: answerLang,
+        createdAt: serverTimestamp()
+      });
+      // Update chat metadata as part of the same atomic batch
+      batch.update(chatRef, {
+        updatedAt: serverTimestamp(),
+        lastSnippet: (assistantText || '').slice(0, 120)
+      });
+      wroteCount++;
+    }
+
+    if (wroteCount > 0) {
+      // Maintain a rolling counter for analytics/badges if you like
+      batch.update(chatRef, {
+        messageCount: increment(wroteCount)
+      });
+    }
+
+    await batch.commit();
+  } catch (e) {
+    console.error('Failed to save turn to Firestore', e);
+  }
+}
+
       async function deleteFirestoreChat(uid, chatId) {
   const { db, collection, getDocs, doc } = window.__db;
   // Delete subcollection messages in small batches
