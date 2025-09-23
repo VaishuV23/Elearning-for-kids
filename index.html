@@ -502,9 +502,7 @@
         ✉️ Continue with email
       </button>
 
-      <!-- reCAPTCHA root for phone login -->
-      <div id="recaptcha-container" style="margin-top:8px;"></div>
-
+      
       <p class="auth-foot">By continuing, you agree to our Terms & Privacy.</p>
     </div>
   </section>
@@ -523,8 +521,6 @@
       </button>
     </div>
   </div>
-
-
         
      
     <div id="loginRequired" style="display:none; text-align:center; margin:1rem 0; padding:1rem; border:1px solid var(--bd); border-radius:12px; background:#fff;">
@@ -706,7 +702,14 @@
       const fbProvider = new FacebookAuthProvider();
       // DOM references for auth
       const loginBtn    = document.getElementById('loginBtn');
-      const logoutBtn   = document.getElementById('logoutBtn');
+     const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    try { await signOut(auth); }
+    catch (e) { console.error('Sign out failed:', e); }
+  });
+}
+
       const userNameEl  = document.getElementById('userName');
       const userEmailEl = document.getElementById('userEmail');
       const userPhotoEl = document.getElementById('userPhoto');
