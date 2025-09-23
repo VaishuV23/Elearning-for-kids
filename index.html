@@ -62,31 +62,65 @@
       #authBar .user-name { font-weight: 600; }
       #authBar .user-email { color: var(--muted); font-size: .9rem; }
       /* --- Auth bar pro styles --- */
-.auth-actions {
-  display: flex;
-  gap: .6rem;
-  align-items: center;
+/* Full-screen auth */
+#authScreen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(1200px 600px at 10% 0%, #ffffff 60%, #f6f7fb 100%);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
 }
 
+.auth-card {
+  width: min(520px, 92vw);
+  background: #fff;
+  border: 1px solid var(--bd);
+  border-radius: 16px;
+  padding: 28px 28px 22px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.08);
+  text-align: center;
+}
+
+.brand {
+  font-weight: 800;
+  letter-spacing: .2px;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.auth-title { margin: 6px 0 2px; font-size: 28px; }
+.auth-sub   { margin: 0 0 16px; color: var(--muted); }
+
+.auth-stack { display: grid; gap: 10px; margin: 12px 0; }
+
 .btn-auth {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .55rem .9rem;
-  border-radius: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 999px;
   border: 1px solid var(--bd);
   background: #fff;
-  color: var(--ink);
   font-weight: 600;
-  font-size: .9rem;
-  line-height: 1;
   cursor: pointer;
-  box-shadow: 0 1px 0 rgba(0,0,0,.03);
-  transition: transform .06s ease, box-shadow .2s ease, border-color .2s;
+  transition: transform .05s ease, box-shadow .25s ease, border-color .25s ease;
 }
-.btn-auth:hover { box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+.btn-auth:hover { box-shadow: 0 8px 24px rgba(0,0,0,.06); }
 .btn-auth:active { transform: translateY(1px); }
-.btn-auth[disabled] { opacity:.6; cursor:not-allowed; }
+
+.btn-google   { background: #fff; }
+.btn-facebook { background: #1877F2; color: #fff; border-color: #1877F2; }
+.btn-email    { background: #111;   color: #fff; border-color: #111; }
+.btn-phone    { background: #16a34a; color:#fff; border-color:#16a34a; }
+
+.auth-sep {
+  margin: 10px 0 6px; display:flex; align-items:center; gap:10px; color: var(--muted);
+}
+.auth-sep:before, .auth-sep:after {
+  content:""; flex:1; height:1px; background: var(--bd);
+}
+.auth-sep span { padding: 0 6px; font-size: 12px; letter-spacing:.3px; }
+
+.auth-foot { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
 
 /* Brands */
 .btn-google      { border-color:#e5e7eb; }
@@ -95,10 +129,10 @@
 .btn-phone       { background:#16a34a; color:#fff; border-color:#16a34a; }
 
 /* Make the auth bar breathe on small screens */
-@media (max-width: 640px) {
+/* @media (max-width: 640px) {
   #authBar { flex-wrap: wrap; gap:.75rem; }
   .auth-actions { flex-wrap: wrap; width:100%; justify-content: flex-end; }
-}
+} */
 
       /* Overall layout */
       .app-container {
@@ -454,36 +488,32 @@
         <span id="userEmail" class="user-email"></span>
       </div>
       <div>
-        <div class="auth-actions">
-  <button id="loginBtn" class="btn-auth btn-google" title="Sign in with Google">
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="#EA4335" d="M12 10.2v3.7h5.1c-.2 1.2-1.5 3.6-5.1 3.6-3.1 0-5.7-2.6-5.7-5.7S8.9 6 12 6c1.7 0 2.9.7 3.5 1.3l2.4-2.4C16.8 3.6 14.6 2.7 12 2.7 6.9 2.7 2.7 6.9 2.7 12S6.9 21.3 12 21.3c6.1 0 9.1-4.3 9.1-8.6 0-.6-.1-1-.1-1.5H12z"/>
-    </svg>
-    Sign in with Google
-  </button>
+        <!-- Full-screen Auth Screen -->
+<section id="authScreen" style="display:none">
+  <div class="auth-card">
+    <div class="brand">Kid Speak & Learn</div>
+    <h2 class="auth-title">Log in or sign up</h2>
+    <p class="auth-sub">You’ll get smarter responses and can upload audio.</p>
 
-  <button id="fbLoginBtn" class="btn-auth btn-facebook" title="Sign in with Facebook">
-    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="currentColor" d="M22 12.07C22 6.48 17.52 2 11.93 2S2 6.48 2 12.07C2 17.08 5.66 21.2 10.44 22v-7.03H7.9V12.1h2.54V9.83c0-2.5 1.49-3.88 3.77-3.88 1.09 0 2.23.2 2.23.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.92h2.78l-.44 2.87h-2.34V22C18.34 21.2 22 17.08 22 12.07z"/>
-    </svg>
-    Sign in with Facebook
-  </button>
+    <div class="auth-stack">
+      <button id="loginBtn"      class="btn-auth btn-google">🔒 Continue with Google</button>
+      <button id="fbLoginBtn"    class="btn-auth btn-facebook">📘 Continue with Facebook</button>
+      <button id="phoneLoginBtn" class="btn-auth btn-phone">📱 Continue with phone</button>
+    </div>
 
-  <button id="emailLoginBtn" class="btn-auth btn-email" title="Sign in with Email">
-    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4-8 5L4 8V6l8 5 8-5v2Z"/>
-    </svg>
-    Sign in with Email
-  </button>
+    <div class="auth-sep"><span>OR</span></div>
 
-  <button id="phoneLoginBtn" class="btn-auth btn-phone" title="Sign in with Mobile">
-    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="currentColor" d="M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2Zm-5 21a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/>
-    </svg>
-    Sign in with Mobile
-  </button>
+    <button id="emailLoginBtn" class="btn-auth btn-email" style="width:100%">
+      ✉️ Continue with email
+    </button>
 
-  <button id="logoutBtn" class="btn-auth" style="display:none">🚪 Sign out</button>
+    <!-- reCAPTCHA root for phone login -->
+    <div id="recaptcha-container" style="margin-top:8px;"></div>
+
+    <p class="auth-foot">By continuing, you agree to our Terms & Privacy.</p>
+  </div>
+</section>
+
 </div>
 
         
@@ -716,6 +746,11 @@ onAuthStateChanged(auth, (u) => {
   if (!appVerifier) {
     appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
   }
+  document.getElementById('authScreen').style.display = 'grid';
+document.querySelector('.app-container').style.display = 'none';
+document.getElementById('authBar').style.display = 'none'; // hide the old thin bar
+
+  
 });
 
 const phoneLoginBtn = document.getElementById('phoneLoginBtn');
@@ -749,6 +784,10 @@ phoneLoginBtn.addEventListener('click', async () => {
             userPhotoEl.style.display = '';
           } else {
             userPhotoEl.style.display = 'none';
+            document.getElementById('authScreen').style.display = 'grid';
+document.querySelector('.app-container').style.display = 'none';
+document.getElementById('authBar').style.display = 'none'; // hide the old thin bar
+
           }
           loginBtn.style.display  = 'none';
           logoutBtn.style.display = '';
