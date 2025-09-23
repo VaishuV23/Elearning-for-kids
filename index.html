@@ -749,83 +749,90 @@ emailLoginBtn.addEventListener('click', async () => {
   }
 });
 // Phone login needs reCAPTCHA
-let appVerifier;
-onAuthStateChanged(auth, () => {
-  // Only ensure reCAPTCHA exists; do not toggle UI here.
-  if (!appVerifier) {
-    appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-  }
-});
+// One single, unified auth state handler
+let appVerifier; // reCAPTCHA verifier (created once)
 
-
-const phoneLoginBtn = document.getElementById('phoneLoginBtn');
-phoneLoginBtn.addEventListener('click', async () => {
+onAuthStateChanged(auth, async (user) => {
+  // Make sure reCAPTCHA exists (needed for phone login)
   try {
-    const phone = prompt('Enter mobile with country code (e.g. +91XXXXXXXXXX):');
-    if (!phone) return;
-    if (!appVerifier) appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-    const confirmation = await signInWithPhoneNumber(auth, phone, appVerifier);
-    const code = prompt('Enter the 6-digit OTP you received:');
-    if (!code) return;
-    await confirmation.confirm(code);
-  } catch (e) {
-    alert('Phone sign-in failed: ' + (e?.message || e));
+    if (!appVerifier) {
+      appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+    }
+  } catch (_) {}
+
+  // Cache user globally
+  window.__auth.user = user || null;
+
+  const authScreen   = document.getElementById('authScreen');
+  const appContainer = document.querySelector('.app-container');
+  const authBar      = document.getElementById('authBar');
+  const loginReqEl   = document.getElementById('loginRequired');
+
+  const userNameEl   = document.getElementById('userName');
+  const userEmailEl  = document.getElementById('userEmail');
+  const userPhotoEl  = document.getElementById('userPhoto');
+
+  if (user) {
+    // ---------- LOGGED IN ----------
+    // Fill top-bar user info
+    userNameEl.textContent  = user.displayName || '';
+    userEmailEl.textContent = user.email || '';
+    if (user.photoURL) {
+      userPhotoEl.src = user.photoURL;
+      userPhotoEl.style.display = '';
+    } else {
+      userPhotoEl.style.display = 'none';
+    }
+
+    // Sidebar profile
+    document.getElementById('profileName').textContent  = user.displayName || '';
+    document.getElementById('profileEmail').textContent = user.email || '';
+    const avatar = document.getElementById('userAvatar');
+    if (user.photoURL) {
+      avatar.textContent = '';
+      avatar.style.backgroundImage  = `url(${user.photoURL})`;
+      avatar.style.backgroundSize   = 'cover';
+      avatar.style.backgroundPosition = 'center';
+    } else {
+      avatar.style.backgroundImage = '';
+      avatar.textContent = '👤';
+    }
+
+    // Show app, hide auth prompts
+    authScreen.style.display   = 'none';
+    appContainer.style.display = '';      // show the app
+    authBar.style.display      = '';      // show the top bar
+    loginReqEl.style.display   = 'none';  // hide the old banner
+
+    // Optional: load user’s chats & enable UI
+    try { await syncChatsFromFirestore(user.uid); } catch {}
+    enableAppControls(true);
+
+  } else {
+    // ---------- LOGGED OUT ----------
+    // Clear visible user info
+    userNameEl.textContent  = '';
+    userEmailEl.textContent = '';
+    userPhotoEl.style.display = 'none';
+    document.getElementById('profileName').textContent  = '';
+    document.getElementById('profileEmail').textContent = '';
+    const avatar = document.getElementById('userAvatar');
+    avatar.style.backgroundImage = '';
+    avatar.textContent = '👤';
+
+    // Show the full-screen login, hide app
+    authScreen.style.display   = 'grid';  // the card with buttons
+    appContainer.style.display = 'none';
+    authBar.style.display      = 'none';
+
+    // Hide the thin “Please sign in …” banner completely
+    loginReqEl.style.display   = 'none';
+
+    enableAppControls(false);
+    window.__auth.lastIdToken = null;
   }
 });
 
-      // Logout handler
-      logoutBtn.addEventListener('click', async () => {
-        try { await signOut(auth); } catch (e) { console.error(e); }
-      });
-      // Auth state observer
-      onAuthStateChanged(auth, async (user) => {
-        window.__auth.user = user;
-        if (user) {
-          // Show user info
-          document.getElementById('authScreen').style.display = 'none';
-document.querySelector('.app-container').style.display = '';
-document.getElementById('authBar').style.display = '';
-          userNameEl.textContent  = user.displayName || '';
-          userEmailEl.textContent = user.email || '';
-          if (user.photoURL) {
-            userPhotoEl.src = user.photoURL;
-            userPhotoEl.style.display = '';
-          } else {
-            userPhotoEl.style.display = 'none';
-            
-
-          }
-          loginBtn.style.display  = 'none';
-          logoutBtn.style.display = '';
-          loginReqEl.style.display = 'none';
-          // Populate profile in sidebar
-          document.getElementById('profileName').textContent = user.displayName || '';
-          document.getElementById('profileEmail').textContent = user.email || '';
-          if (user.photoURL) {
-            document.getElementById('userAvatar').textContent = '';
-            document.getElementById('userAvatar').style.backgroundImage = `url(${user.photoURL})`;
-            document.getElementById('userAvatar').style.backgroundSize = 'cover';
-            document.getElementById('userAvatar').style.backgroundPosition = 'center';
-          }
-          // Fetch chats from Firestore and merge into local storage if none
-          await syncChatsFromFirestore(user.uid);
-          enableAppControls(true);
-        } else {
-          // Logged out
-          userNameEl.textContent  = '';
-          userEmailEl.textContent = '';
-          userPhotoEl.style.display = 'none';
-          loginBtn.style.display  = '';
-          logoutBtn.style.display = 'none';
-          loginReqEl.style.display = '';
-          document.getElementById('profileName').textContent = '';
-          document.getElementById('profileEmail').textContent = '';
-          document.getElementById('userAvatar').style.backgroundImage = '';
-          document.getElementById('userAvatar').textContent = '👤';
-          enableAppControls(false);
-          window.__auth.lastIdToken = null;
-        }
-      });
       // Toggle the language settings view
       const langCard = document.getElementById('langCard');
       const langSettings = document.getElementById('langSettings');
