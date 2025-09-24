@@ -3,8 +3,7 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <title>Kid Speak &amp; Learn</title>
-    <!--
+     <!--
       This page defines a simple single‑page application for the Kid Speak & Learn
       experience.  The layout borrows visual cues from a modern chat interface
       but is implemented with plain HTML and CSS so it can live alongside the
@@ -13,523 +12,125 @@
       preserved (e.g. #chatList, #recordBtn, #textInput) so the original
       behaviour continues to work.
     -->
+    <title>Kid Speak &amp; Learn</title>
     <style>
-      :root {
-        /* Base palette reused from the original application */
-        --card:   #fff;
-        --ink:    #111;
-        --muted:  #666;
-        --bd:     #e5e7eb;
-        --bg:     #f8fafc;
-        --primary:         #111;
-        --primary-contrast:#fff;
-        --accent:          #f1f5f9;
-      }
-      * { box-sizing: border-box; }
-      html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        font-family: system-ui, Segoe UI, Roboto, Arial;
-        background: var(--bg);
-        color: var(--ink);
-        display: flex;
-        flex-direction: column;
-      }
-      /* Authentication bar at the very top */
-      #authBar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: .5rem;
-        padding: .6rem 1rem;
-        border-bottom: 1px solid var(--bd);
-        background: #fff;
-        z-index: 10;
-      }
-      #authBar .user-info {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-      }
-      #authBar img {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 1px solid var(--bd);
-        display: none;
-      }
-      #authBar .user-name { font-weight: 600; }
-      #authBar .user-email { color: var(--muted); font-size: .9rem; }
-      /* --- Auth bar pro styles --- */
-/* Full-screen auth */
-#authScreen {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(1200px 600px at 10% 0%, #ffffff 60%, #f6f7fb 100%);
-  display: grid;
-  place-items: center;
-  z-index: 9999;
-}
-
-.auth-card {
-  width: min(520px, 92vw);
-  background: #fff;
-  border: 1px solid var(--bd);
-  border-radius: 16px;
-  padding: 28px 28px 22px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.08);
-  text-align: center;
-}
-
-.brand {
-  font-weight: 800;
-  letter-spacing: .2px;
-  font-size: 18px;
-  margin-bottom: 6px;
-}
-
-.auth-title { margin: 6px 0 2px; font-size: 28px; }
-.auth-sub   { margin: 0 0 16px; color: var(--muted); }
-
-.auth-stack { display: grid; gap: 10px; margin: 12px 0; }
-
-.btn-auth {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--bd);
-  background: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform .05s ease, box-shadow .25s ease, border-color .25s ease;
-}
-.btn-auth:hover { box-shadow: 0 8px 24px rgba(0,0,0,.06); }
-.btn-auth:active { transform: translateY(1px); }
-
-.btn-google   { background: #fff; }
-.btn-facebook { background: #1877F2; color: #fff; border-color: #1877F2; }
-.btn-email    { background: #111;   color: #fff; border-color: #111; }
-.btn-phone    { background: #16a34a; color:#fff; border-color:#16a34a; }
-
-.auth-sep {
-  margin: 10px 0 6px; display:flex; align-items:center; gap:10px; color: var(--muted);
-}
-.auth-sep:before, .auth-sep:after {
-  content:""; flex:1; height:1px; background: var(--bd);
-}
-.auth-sep span { padding: 0 6px; font-size: 12px; letter-spacing:.3px; }
-
-.auth-foot { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
-
-/* Brands */
-.btn-google      { border-color:#e5e7eb; }
-.btn-facebook    { background:#1877F2; color:#fff; border-color:#1877F2; }
-.btn-email       { background:#111; color:#fff; border-color:#111; }
-.btn-phone       { background:#16a34a; color:#fff; border-color:#16a34a; }
-
-/* Make the auth bar breathe on small screens */
-/* @media (max-width: 640px) {
-  #authBar { flex-wrap: wrap; gap:.75rem; }
-  .auth-actions { flex-wrap: wrap; width:100%; justify-content: flex-end; }
-} */
-
-      /* Overall layout */
-      .app-container {
-        flex: 1;
-        display: flex;
-        min-height: 0;
-        overflow: hidden;
-      }
-      /* Sidebar area */
-      .side {
-        width: 280px;
-        background: var(--card);
-        border-right: 1px solid var(--bd);
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-      }
-      .side h1 {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 600;
-      }
-      .side .header {
-        padding: 1rem;
-        border-bottom: 1px solid var(--bd);
-      }
-      .side .header .logo {
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        margin-bottom: .75rem;
-      }
-      .side .header .logo-icon {
-        width: 32px;
-        height: 32px;
-        background: var(--primary);
-        color: var(--primary-contrast);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: .9rem;
-      }
-      /* Language selection card */
-      .lang-card {
-        cursor: pointer;
-        padding: .5rem .75rem;
-        background: var(--bg);
-        border: 1px solid transparent;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: background .15s, border-color .15s;
-      }
-      .lang-card:hover {
-        background: var(--accent);
-        border-color: var(--bd);
-      }
-      .lang-settings {
-        margin-top: .75rem;
-        padding: .75rem;
-        background: var(--bg);
-        border: 1px solid var(--bd);
-        border-radius: 8px;
-      }
-      .lang-settings label {
-        font-size: .75rem;
-        color: var(--muted);
-        display: block;
-        margin-bottom: .25rem;
-      }
-      .lang-settings select {
-        width: 100%;
-        padding: .5rem;
-        border: 1px solid var(--bd);
-        border-radius: 6px;
-        background: #fff;
-        font-size: .9rem;
-      }
-      /* Chat history list */
-      .chat-list-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: .5rem;
-      }
-      .chatitem {
-        padding: .6rem .7rem;
-        border: 1px solid var(--bd);
-        border-radius: 10px;
-        background: #fafafa;
-        cursor: pointer;
-        transition: background .15s, border-color .15s;
-      }
-      .chatitem:hover {
-        background: #f1f5f9;
-      }
-      .chatitem.active {
-        background: #eef2ff;
-        border-color: #c7d2fe;
-      }
-      /* User profile at bottom of sidebar */
-      .user-profile {
-        padding: 1rem;
-        border-top: 1px solid var(--bd);
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-      }
-      .user-profile .avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: rgba(17, 17, 17, .1);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: .9rem;
-      }
-      .user-profile .info {
-        flex: 1;
-        min-width: 0;
-      }
-      .user-profile .info .name {
-        font-size: .9rem;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .user-profile .info .email {
-        font-size: .75rem;
-        color: var(--muted);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      /* Main conversation panel */
-      main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-      }
-      .status {
-        padding: 0.5rem 1rem;
-        font-size: .9rem;
-        color: var(--muted);
-      }
-      #loadingBar {
-        display: none;
-        width: 100%;
-        padding: .6rem;
-        background: #4CAF50;
-        color: #fff;
-        text-align: center;
-        border-radius: 8px;
-        margin: 0 1rem .5rem;
-        font-weight: 600;
-      }
-      #chatThread {
-        flex: 1;
-        overflow-y: auto;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: .75rem;
-        background: var(--bg);
-        border-top: 1px solid var(--bd);
-        border-bottom: 1px solid var(--bd);
-      }
-      /* Message bubbles */
-      .msg {
-        max-width: 70%;
-        padding: .6rem 1rem;
-        border-radius: 16px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        line-height: 1.4;
-        word-break: break-word;
-        font-size: .95rem;
-      }
-      .msg.user {
-        align-self: flex-end;
-        background: linear-gradient(135deg, #dbeafe, #c7d2fe);
-        border-top-right-radius: 0;
-      }
-      .msg.assistant {
-        align-self: flex-start;
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        border-top-left-radius: 0;
-      }
-      /* Markdown formatting for assistant bubbles */
-.msg.assistant :is(p, ul, ol, pre, code, blockquote, h1, h2, h3) { margin: .25rem 0; }
-.msg.assistant pre { padding: .6rem; border-radius: 8px; overflow:auto; background:#1111/4; }
-.msg.assistant code { padding: .1rem .3rem; border-radius: 6px; background:#1111/4; }
-.msg.assistant a { color:#0b62ff; text-decoration:none; }
-.msg.assistant a:hover { text-decoration:underline; }
-
-      /* Suggestions */
-      #suggestions {
-        display: none;
-        padding: .5rem 1rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: .5rem;
-      }
-      .suggestion-btn {
-        padding: .4rem .9rem;
-        border-radius: 999px;
-        background: #f1f5f9;
-        border: 1px solid var(--bd);
-        cursor: pointer;
-        font-size: .85rem;
-        transition: background .2s;
-      }
-      .suggestion-btn:hover { background: #e2e8f0; }
-      /* Player */
-      #player {
-        margin: 0 1rem 1rem;
-        width: calc(100% - 2rem);
-      }
-      /* Input area */
-      .input-panel {
-        border-top: 1px solid var(--bd);
-        padding: 1rem;
-      }
-      .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: flex-end;
-        gap: .5rem;
-        padding: .6rem;
-        background: rgba(0,0,0,0.02);
-        border: 1px solid var(--bd);
-        border-radius: 16px;
-      }
-      #recordBtn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: none;
-        background: var(--primary);
-        color: var(--primary-contrast);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-      }
-      #recordBtn.recording {
-        background: #dc2626;
-        animation: pulse 1s infinite;
-      }
-      @keyframes pulse {
-        0%   { transform: scale(1); }
-        50%  { transform: scale(1.05); }
-        100% { transform: scale(1); }
-      }
-      #pauseBtn {
-        display: none;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--primary);
-        color: var(--primary-contrast);
-        border: none;
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      #sendBtn, #sendTextBtn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        background: var(--primary);
-        color: var(--primary-contrast);
-        transition: opacity .2s;
-      }
-      #sendBtn[disabled], #sendTextBtn[disabled] { opacity: .5; cursor: not-allowed; }
-      #textInput {
-        flex: 1;
-        min-height: 24px;
-        max-height: 120px;
-        resize: none;
-        border: none;
-        outline: none;
-        background: transparent;
-        font-size: .95rem;
-      }
-      #timer {
-        position: absolute;
-        top: -1.6rem;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: .2rem .6rem;
-        background: #dc2626;
-        color: #fff;
-        border-radius: 999px;
-        font-size: .75rem;
-        display: none;
-      }
-      /* Hidden elements used by the script to maintain compatibility */
-      #transcript, #answer {
-        display: none;
-      }
-      /* Hide the mobile toggle button by default; it becomes visible on small screens */
-      .mobile-toggle { display: none; }
-      /* Hide the mobile header by default; it becomes visible on small screens */
-      #mobileHeader { display: none; }
-      /* Mobile responsiveness: reuse existing classes */
-      @media (max-width: 940px) {
-        .side {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 75%;
-          height: 100vh;
-          z-index: 999;
-          background: #fff;
-          border-right: 1px solid var(--bd);
-          overflow: auto;
-          transition: transform .3s ease-out;
-          transform: translateX(-100%);
-        }
-        .side.open { transform: translateX(0); }
-        .mobile-toggle {
-          display: inline-block;
-          margin: .5rem 1rem;
-          cursor: pointer;
-          background: var(--card);
-          border: 1px solid var(--bd);
-          padding: .5rem .75rem;
-          border-radius: 8px;
-        }
-        /* Show the mobile header when the viewport is narrow */
-        #mobileHeader { display: block; }
+      :root{--card:#fff;--ink:#111;--muted:#666;--bd:#e5e7eb;--bg:#f8fafc;--primary:#111;--primary-contrast:#fff;--accent:#f1f5f9}
+      *{box-sizing:border-box}
+      html,body{margin:0;padding:0;height:100%;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink);display:flex;flex-direction:column}
+      #authBar{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.6rem 1rem;border-bottom:1px solid var(--bd);background:#fff;z-index:10}
+      #authBar .user-info{display:flex;align-items:center;gap:.5rem}
+      #authBar img{width:28px;height:28px;border-radius:50%;border:1px solid var(--bd);display:none}
+      #authBar .user-name{font-weight:600}
+      #authBar .user-email{color:var(--muted);font-size:.9rem}
+      #authScreen{position:fixed;inset:0;background:radial-gradient(1200px 600px at 10% 0%, #ffffff 60%, #f6f7fb 100%);display:grid;place-items:center;z-index:9999}
+      .auth-card{width:min(520px,92vw);background:#fff;border:1px solid var(--bd);border-radius:16px;padding:28px 28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.08);text-align:center}
+      .brand{font-weight:800;letter-spacing:.2px;font-size:18px;margin-bottom:6px}
+      .auth-title{margin:6px 0 2px;font-size:28px}
+      .auth-sub{margin:0 0 16px;color:var(--muted)}
+      .auth-stack{display:grid;gap:10px;margin:12px 0}
+      .btn-auth{width:100%;padding:12px 14px;border-radius:999px;border:1px solid var(--bd);background:#fff;font-weight:600;cursor:pointer;transition:transform .05s ease,box-shadow .25s ease,border-color .25s ease}
+      .btn-auth:hover{box-shadow:0 8px 24px rgba(0,0,0,.06)}
+      .btn-auth:active{transform:translateY(1px)}
+      .btn-facebook{background:#1877F2;color:#fff;border-color:#1877F2}
+      .btn-email{background:#111;color:#fff;border-color:#111}
+      .btn-phone{background:#16a34a;color:#fff;border-color:#16a34a}
+      .auth-sep{margin:10px 0 6px;display:flex;align-items:center;gap:10px;color:var(--muted)}
+      .auth-sep:before,.auth-sep:after{content:"";flex:1;height:1px;background:var(--bd)}
+      .auth-sep span{padding:0 6px;font-size:12px;letter-spacing:.3px}
+      .auth-foot{margin:14px 0 0;color:var(--muted);font-size:12px}
+      .app-container{flex:1;display:flex;min-height:0;overflow:hidden}
+      .side{width:280px;background:var(--card);border-right:1px solid var(--bd);display:flex;flex-direction:column;min-height:0}
+      .side h1{margin:0;font-size:1.2rem;font-weight:600}
+      .side .header{padding:1rem;border-bottom:1px solid var(--bd)}
+      .side .header .logo{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+      .side .header .logo-icon{width:32px;height:32px;background:var(--primary);color:var(--primary-contrast);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+      .lang-card{cursor:pointer;padding:.5rem .75rem;background:var(--bg);border:1px solid transparent;border-radius:8px;display:flex;align-items:center;justify-content:space-between;transition:background .15s,border-color .15s}
+      .lang-card:hover{background:var(--accent);border-color:var(--bd)}
+      .lang-settings{margin-top:.75rem;padding:.75rem;background:var(--bg);border:1px solid var(--bd);border-radius:8px}
+      .lang-settings label{font-size:.75rem;color:var(--muted);display:block;margin-bottom:.25rem}
+      .lang-settings select{width:100%;padding:.5rem;border:1px solid var(--bd);border-radius:6px;background:#fff;font-size:.9rem}
+      .chat-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+      .chatitem{padding:.6rem .7rem;border:1px solid var(--bd);border-radius:10px;background:#fafafa;cursor:pointer;transition:background .15s,border-color .15s}
+      .chatitem:hover{background:#f1f5f9}
+      .chatitem.active{background:#eef2ff;border-color:#c7d2fe}
+      .user-profile{padding:1rem;border-top:1px solid var(--bd);display:flex;align-items:center;gap:.75rem}
+      .user-profile .avatar{width:32px;height:32px;border-radius:50%;background:rgba(17,17,17,.1);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.9rem}
+      .user-profile .info{flex:1;min-width:0}
+      .user-profile .info .name{font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .user-profile .info .email{font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      main{flex:1;display:flex;flex-direction:column;min-height:0}
+      .status{padding:.5rem 1rem;font-size:.9rem;color:var(--muted)}
+      #loadingBar{display:none;width:100%;padding:.6rem;background:#4CAF50;color:#fff;text-align:center;border-radius:8px;margin:0 1rem .5rem;font-weight:600}
+      #chatThread{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.75rem;background:var(--bg);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+      .msg{max-width:70%;padding:.6rem 1rem;border-radius:16px;box-shadow:0 2px 4px rgba(0,0,0,.05);line-height:1.4;word-break:break-word;font-size:.95rem}
+      .msg.user{align-self:flex-end;background:linear-gradient(135deg,#dbeafe,#c7d2fe);border-top-right-radius:0}
+      .msg.assistant{align-self:flex-start;background:linear-gradient(135deg,#fef3c7,#fde68a);border-top-left-radius:0}
+      .msg.assistant :is(p,ul,ol,pre,code,blockquote,h1,h2,h3){margin:.25rem 0}
+      .msg.assistant pre{padding:.6rem;border-radius:8px;overflow:auto;background:#1111/4}
+      .msg.assistant code{padding:.1rem .3rem;border-radius:6px;background:#1111/4}
+      .msg.assistant a{color:#0b62ff;text-decoration:none}
+      .msg.assistant a:hover{text-decoration:underline}
+      #suggestions{display:none;padding:.5rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem}
+      .suggestion-btn{padding:.4rem .9rem;border-radius:999px;background:#f1f5f9;border:1px solid var(--bd);cursor:pointer;font-size:.85rem;transition:background .2s}
+      .suggestion-btn:hover{background:#e2e8f0}
+      #player{margin:0 1rem 1rem;width:calc(100% - 2rem)}
+      .input-panel{border-top:1px solid var(--bd);padding:1rem}
+      .input-wrapper{position:relative;display:flex;align-items:flex-end;gap:.5rem;padding:.6rem;background:rgba(0,0,0,0.02);border:1px solid var(--bd);border-radius:16px}
+      #recordBtn,#pauseBtn,#sendBtn,#sendTextBtn{width:40px;height:40px;border-radius:50%;border:none;background:var(--primary);color:var(--primary-contrast);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem}
+      #recordBtn.recording{background:#dc2626;animation:pulse 1s infinite}
+      @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+      #sendBtn[disabled],#sendTextBtn[disabled]{opacity:.5;cursor:not-allowed}
+      #textInput{flex:1;min-height:24px;max-height:120px;resize:none;border:none;outline:none;background:transparent;font-size:.95rem}
+      #timer{position:absolute;top:-1.6rem;left:50%;transform:translateX(-50%);padding:.2rem .6rem;background:#dc2626;color:#fff;border-radius:999px;font-size:.75rem;display:none}
+      #transcript,#answer{display:none}
+      .mobile-toggle{display:none}
+      #mobileHeader{display:none}
+      @media (max-width:940px){
+        .side{position:fixed;top:0;left:0;width:75%;height:100vh;z-index:999;background:#fff;border-right:1px solid var(--bd);overflow:auto;transition:transform .3s ease-out;transform:translateX(-100%)}
+        .side.open{transform:translateX(0)}
+        .mobile-toggle{display:inline-block;margin:.5rem 1rem;cursor:pointer;background:var(--card);border:1px solid var(--bd);padding:.5rem .75rem;border-radius:8px}
+        #mobileHeader{display:block}
       }
     </style>
   </head>
   <body>
-    <!-- Authentication bar: displays sign in/out and user details -->
-   
-
-  <!-- Full-screen Auth Screen (shown when logged out) -->
-  <section id="authScreen" style="display:none">
-    <div class="auth-card">
-      <div class="brand">Kid Speak & Learn</div>
-      <h2 class="auth-title">Log in or sign up</h2>
-      <p class="auth-sub">You’ll get smarter responses and can upload audio.</p>
-
-      <div class="auth-stack">
-        <button id="loginBtn"      class="btn-auth btn-google">🔒 Continue with Google</button>
-        <button id="fbLoginBtn"    class="btn-auth btn-facebook">📘 Continue with Facebook</button>
-        <button id="phoneLoginBtn" class="btn-auth btn-phone">📱 Continue with phone</button>
+    <!-- Full-screen Auth Screen -->
+    <section id="authScreen" style="display:none">
+      <div class="auth-card">
+        <div class="brand">Kid Speak & Learn</div>
+        <h2 class="auth-title">Log in or sign up</h2>
+        <p class="auth-sub">You’ll get smarter responses and can upload audio.</p>
+        <div class="auth-stack">
+          <button id="loginBtn"      class="btn-auth">🔒 Continue with Google</button>
+          <button id="fbLoginBtn"    class="btn-auth btn-facebook">📘 Continue with Facebook</button>
+          <button id="phoneLoginBtn" class="btn-auth btn-phone">📱 Continue with phone</button>
+        </div>
+        <div class="auth-sep"><span>OR</span></div>
+        <button id="emailLoginBtn" class="btn-auth btn-email" style="width:100%">✉️ Continue with email</button>
+        <p class="auth-foot">By continuing, you agree to our Terms & Privacy.</p>
       </div>
+    </section>
 
-      <div class="auth-sep"><span>OR</span></div>
-
-      <button id="emailLoginBtn" class="btn-auth btn-email" style="width:100%">
-        ✉️ Continue with email
-      </button>
-
-      
-      <p class="auth-foot">By continuing, you agree to our Terms & Privacy.</p>
+    <!-- Thin top bar -->
+    <div id="authBar" style="display:none">
+      <div class="user-info">
+        <img id="userPhoto" src="" alt="User" />
+        <span id="userName" class="user-name"></span>
+        <span id="userEmail" class="user-email"></span>
+      </div>
+      <div id="recaptcha-container"></div>
+      <div class="auth-actions">
+        <button id="logoutBtn" class="btn-auth" style="padding:.4rem .9rem;border-radius:8px;">🚪 Sign out</button>
+      </div>
     </div>
-  </section>
 
-  <!-- Thin top bar (shown when logged in) -->
-  <div id="authBar" style="display:none">
-    <div class="user-info">
-      <img id="userPhoto" src="" alt="User" />
-      <span id="userName" class="user-name"></span>
-      <span id="userEmail" class="user-email"></span>
-    </div>
-     <div id="recaptcha-container"></div>
-    <div class="auth-actions">
-      <button id="logoutBtn" class="btn-auth" style="padding:.4rem .9rem;border-radius:8px;">
-        🚪 Sign out
-      </button>
-    </div>
-  </div>
-        
-     
-    <div id="loginRequired" style="display:none; text-align:center; margin:1rem 0; padding:1rem; border:1px solid var(--bd); border-radius:12px; background:#fff;">
+    <div id="loginRequired" style="display:none;text-align:center;margin:1rem 0;padding:1rem;border:1px solid var(--bd);border-radius:12px;background:#fff;">
       Please sign in to start using Kid Speak &amp; Learn.
     </div>
-    <!-- Button to reveal recent chats on mobile.  Visible only on small screens -->
+
     <button id="toggleSidebarBtn" class="mobile-toggle">Recent Chats</button>
+
     <div class="app-container">
-      <!-- Sidebar containing header, language selection, chats and user profile -->
       <aside class="side" id="sidebar">
         <div class="header">
           <div class="logo">
@@ -537,18 +138,16 @@
             <h1>Kid Speak &amp; Learn</h1>
           </div>
           <div id="langCard" class="lang-card">
-            <div style="display:flex; align-items:center; gap:.5rem;">
-              <span>🌐</span>
-              <span id="langLabel">English → English</span>
-            </div>
-            <span style="font-size:.9rem;">▼</span>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span>🌐</span><span id="langLabel">English → English</span>
+            </div><span style="font-size:.9rem;">▼</span>
           </div>
           <div id="langSettings" class="lang-settings" style="display:none;">
             <div style="margin-bottom:.75rem;">
               <label for="speakLang">Speaking</label>
               <select id="speakLang" required>
                 <option value="">Select language</option>
-                <option>English</option>
+               <option>English</option>
                 <option>Hindi (हिन्दी)</option>
                 <option>Tamil (தமிழ்)</option>
                 <option>Telugu (తెలుగు)</option>
@@ -574,45 +173,43 @@
                 <option>Gujarati (ગુજરાતી)</option>
                 <option>Bengali (বাংলা)</option>
                 <option>Panjabi (ਪੰਜਾਬੀ)</option>
+
               </select>
             </div>
           </div>
         </div>
-        <div style="flex:1; overflow-y:auto; padding: 1rem;">
-          <div class="chat-list-header">
-  <h3 style="font-size:.9rem; font-weight:600; color: var(--muted); margin:0;">Recent Chats</h3>
-  <div style="display:flex; gap:.4rem;">
-    <button id="newChatBtn" title="New chat" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">➕</button>
-    <button id="clearAllBtn" title="Delete all chats" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
-  </div>
-</div>
 
-          <div id="chatList" class="chatlist" style="display:flex; flex-direction:column; gap:.5rem;"></div>
+        <div style="flex:1;overflow-y:auto;padding:1rem;">
+          <div class="chat-list-header">
+            <h3 style="font-size:.9rem;font-weight:600;color:var(--muted);margin:0;">Recent Chats</h3>
+            <div style="display:flex;gap:.4rem;">
+              <button id="newChatBtn" title="New chat" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">➕</button>
+              <button id="clearAllBtn" title="Delete all chats" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">🗑️</button>
+            </div>
+          </div>
+          <div id="chatList" class="chatlist" style="display:flex;flex-direction:column;gap:.5rem;"></div>
         </div>
+
         <div class="user-profile">
           <div class="avatar" id="userAvatar">👤</div>
           <div class="info">
             <div class="name" id="profileName"></div>
             <div class="email" id="profileEmail"></div>
           </div>
-          <button id="settingsBtn" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color: var(--muted);">⚙️</button>
+          <button id="settingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);">⚙️</button>
         </div>
       </aside>
-      <!-- Main conversation area -->
+
       <main>
-        <!-- Mobile header shows the app name and language selector on small screens.  Hidden on desktop. -->
-        <div id="mobileHeader" class="mobile-header" style="padding:1rem; border-bottom:1px solid var(--bd);">
-          <div style="display:flex; align-items:center; gap:.75rem; margin-bottom:.5rem;">
-            <div style="width:32px; height:32px; background:var(--primary); color:var(--primary-contrast); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.9rem;">💬</div>
-            <h1 style="margin:0; font-size:1.2rem; font-weight:600;">Kid Speak &amp; Learn</h1>
+        <div id="mobileHeader" class="mobile-header" style="padding:1rem;border-bottom:1px solid var(--bd);">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;">
+            <div style="width:32px;height:32px;background:var(--primary);color:var(--primary-contrast);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;">💬</div>
+            <h1 style="margin:0;font-size:1.2rem;font-weight:600;">Kid Speak &amp; Learn</h1>
           </div>
-          <!-- Language selector for mobile -->
           <div id="mobileLangCard" class="lang-card" style="margin-bottom:.5rem;">
-            <div style="display:flex; align-items:center; gap:.5rem;">
-              <span>🌐</span>
-              <span id="mobileLangLabel">English → English</span>
-            </div>
-            <span style="font-size:.9rem;">▼</span>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span>🌐</span><span id="mobileLangLabel">English → English</span>
+            </div><span style="font-size:.9rem;">▼</span>
           </div>
           <div id="mobileLangSettings" class="lang-settings" style="display:none;">
             <div style="margin-bottom:.75rem;">
@@ -629,6 +226,7 @@
                 <option>Gujarati (ગુજરાતી)</option>
                 <option>Bengali (বাংলা)</option>
                 <option>Panjabi (ਪੰਜਾਬੀ)</option>
+
               </select>
             </div>
             <div>
@@ -649,43 +247,52 @@
             </div>
           </div>
         </div>
+
         <div id="status" class="status">Choose both languages → tap <b>Start recording</b>, type a question or tap <b>Send</b>.</div>
         <div id="loadingBar">We are preparing your answers…</div>
-        <!-- Chat thread -->
         <div id="chatThread"></div>
-        <!-- Suggestions -->
         <div id="suggestions"></div>
-        <!-- Audio player -->
         <audio id="player" controls></audio>
-        <!-- Input panel -->
+
         <div class="input-panel">
           <div class="input-wrapper">
             <button id="recordBtn" title="Start recording">🎙️</button>
-            <button id="pauseBtn" title="Pause/Resume">⏸</button>
+            <button id="pauseBtn" title="Pause/Resume" style="display:none">⏸</button>
             <textarea id="textInput" placeholder="Type your message here…" rows="1"></textarea>
             <button id="sendBtn" title="Send audio" disabled>📤</button>
             <button id="sendTextBtn" title="Send text" disabled>➤</button>
             <span id="timer">00:00</span>
           </div>
-          <div id="voiceActions" style="display:none; gap:.5rem; margin-top:.5rem;">
-  <button id="voiceSendBtn"  title="Send recording">📤 Send</button>
-  <button id="voiceDiscardBtn" title="Discard recording">🗑️ Delete</button>
-</div>
+          <div id="voiceActions" style="display:none;gap:.5rem;margin-top:.5rem;">
+            <button id="voiceSendBtn"  title="Send recording">📤 Send</button>
+            <button id="voiceDiscardBtn" title="Discard recording">🗑️ Delete</button>
+          </div>
         </div>
       </main>
     </div>
-    <!-- Hidden transcript/answer boxes used by the script -->
+
     <div id="transcript"></div>
     <div id="answer"></div>
-    <!-- Firebase and app scripts -->
-    <script type="module">
-      // Import Firebase SDKs
-      import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-      import {getAuth, GoogleAuthProvider, FacebookAuthProvider,signInWithPopup, signOut, onAuthStateChanged, getIdToken,createUserWithEmailAndPassword, signInWithEmailAndPassword,RecaptchaVerifier, signInWithPhoneNumber} from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
 
-      // import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getIdToken } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-      import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
-      // Your web app's Firebase configuration
+    <!-- MODULE: Firebase + Auth UI helpers -->
+    <script type="module">
+      // --- Safe stub so module can run before non-module defines validateLangs() ---
+      window.validateLangs = window.validateLangs || function(){ return false; };
+      const safeValidate = () => (window.validateLangs ? window.validateLangs() : false);
+
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
+      import {
+        getAuth, GoogleAuthProvider, FacebookAuthProvider,
+        signInWithPopup, signOut, onAuthStateChanged, getIdToken,
+        createUserWithEmailAndPassword, signInWithEmailAndPassword,
+        RecaptchaVerifier, signInWithPhoneNumber
+      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
+      import {
+        getFirestore, doc, setDoc, updateDoc, collection, addDoc,
+        serverTimestamp, query, orderBy, limit, getDocs, increment,
+        writeBatch, getDoc
+      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+
       const firebaseConfig = {
         apiKey: "AIzaSyARKGvFd051nAxe3lXpkcktBHl46NP38A0",
         authDomain: "kid-speak-learn.firebaseapp.com",
@@ -694,308 +301,262 @@
         messagingSenderId: "334841993987",
         appId: "1:334841993987:web:1eebc8a53936d06ed0e736"
       };
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
+
+      const app  = initializeApp(firebaseConfig);
       const auth = getAuth(app);
-      const db = getFirestore(app);
-      const provider = new GoogleAuthProvider();
+      const db   = getFirestore(app);
+      const provider   = new GoogleAuthProvider();
       const fbProvider = new FacebookAuthProvider();
-      // DOM references for auth
-      const loginBtn    = document.getElementById('loginBtn');
-     const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async () => {
-    try { await signOut(auth); }
-    catch (e) { console.error('Sign out failed:', e); }
-  });
-}
 
-      const userNameEl  = document.getElementById('userName');
-      const userEmailEl = document.getElementById('userEmail');
-      const userPhotoEl = document.getElementById('userPhoto');
-      const loginReqEl  = document.getElementById('loginRequired');
-      const fbLoginBtn = document.getElementById('fbLoginBtn');
-fbLoginBtn.addEventListener('click', async () => {
-  try { await signInWithPopup(auth, fbProvider); }
-  catch (e) { alert('Facebook login failed: ' + (e?.message || e)); }
-});
-
-      const phoneLoginBtn = document.getElementById('phoneLoginBtn');
-phoneLoginBtn.addEventListener('click', async () => {
-  try {
-    const phone = prompt('Enter mobile with country code (e.g. +91XXXXXXXXXX):');
-    if (!phone) return;
-    const verifier = ensureRecaptcha();      // <- initialize (once)
-    const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
-    const code = prompt('Enter the 6-digit OTP you received:');
-    if (!code) return;
-    await confirmation.confirm(code);
-  } catch (e) {
-    // Common errors clarified for you in the UI:
-    if (String(e.message || e).includes('captcha')) {
-      alert('reCAPTCHA failed. Make sure the page is served over HTTPS and try again.');
-    } else if (String(e.code).includes('auth/too-many-requests')) {
-      alert('Too many attempts. Wait a few minutes and try again.');
-    } else {
-      alert('Phone sign-in failed: ' + (e?.message || e));
-    }
-    // Optional: reset the verifier if it got stuck
-    try { appVerifier = null; } catch {}
-  }
-});
-
-      // Expose to global for non-module script
+      // Expose for later scripts
       window.__auth = { auth, getIdToken, user: null };
-      window.__db = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc  };
-      // Login click handler
-      loginBtn.addEventListener('click', async () => {
+      window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc  };
+
+      // Refs
+      const loginBtn       = document.getElementById('loginBtn');
+      const fbLoginBtn     = document.getElementById('fbLoginBtn');
+      const phoneLoginBtn  = document.getElementById('phoneLoginBtn');
+      const emailLoginBtn  = document.getElementById('emailLoginBtn');
+      const logoutBtn      = document.getElementById('logoutBtn');
+      const authScreen     = document.getElementById('authScreen');
+      const appContainer   = document.querySelector('.app-container');
+      const authBar        = document.getElementById('authBar');
+      const loginReqEl     = document.getElementById('loginRequired');
+
+      const userNameEl     = document.getElementById('userName');
+      const userEmailEl    = document.getElementById('userEmail');
+      const userPhotoEl    = document.getElementById('userPhoto');
+      const profileNameEl  = document.getElementById('profileName');
+      const profileEmailEl = document.getElementById('profileEmail');
+      const userAvatarEl   = document.getElementById('userAvatar');
+
+      // Debounce popup logins
+      let loggingIn = false;
+      loginBtn?.addEventListener('click', async () => {
+        if (loggingIn) return; loggingIn = true; loginBtn.disabled = true;
+        try { await signInWithPopup(auth, provider); }
+        catch (e) { alert('Login failed: ' + (e?.message || e)); }
+        finally { loggingIn = false; loginBtn.disabled = false; }
+      });
+
+      fbLoginBtn?.addEventListener('click', async () => {
+        if (loggingIn) return; loggingIn = true; fbLoginBtn.disabled = true;
+        try { await signInWithPopup(auth, fbProvider); }
+        catch (e) { alert('Facebook login failed: ' + (e?.message || e)); }
+        finally { loggingIn = false; fbLoginBtn.disabled = false; }
+      });
+
+      let appVerifier;
+      function ensureRecaptcha() {
+        if (!appVerifier) {
+          appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+        }
+        return appVerifier;
+      }
+
+      phoneLoginBtn?.addEventListener('click', async () => {
         try {
-          await signInWithPopup(auth, provider);
+          const phone = prompt('Enter mobile with country code (e.g. +91XXXXXXXXXX):');
+          if (!phone) return;
+          const verifier = ensureRecaptcha();
+          const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
+          const code = prompt('Enter the 6-digit OTP you received:');
+          if (!code) return;
+          await confirmation.confirm(code);
         } catch (e) {
-          alert('Login failed: ' + (e?.message || e));
+          if (String(e.message || e).includes('captcha')) {
+            alert('reCAPTCHA failed. Make sure the page is served over HTTPS and try again.');
+          } else if (String(e.code).includes('auth/too-many-requests')) {
+            alert('Too many attempts. Wait a few minutes and try again.');
+          } else {
+            alert('Phone sign-in failed: ' + (e?.message || e));
+          }
+          try { appVerifier = null; } catch {}
         }
       });
 
-      const emailLoginBtn = document.getElementById('emailLoginBtn');
-emailLoginBtn.addEventListener('click', async () => {
-  const email = prompt('Enter email:');
-  const pass  = prompt('Enter password (min 6 chars):');
-  if (!email || !pass) return;
-  try {
-    await signInWithEmailAndPassword(auth, email, pass);
-  } catch (e) {
-    if (String(e?.code).includes('user-not-found')) {
-      try { 
-        await createUserWithEmailAndPassword(auth, email, pass); 
-      } catch (e2) { 
-        alert('Sign up failed: ' + (e2?.message || e2)); 
+      logoutBtn?.addEventListener('click', async () => {
+        try { await signOut(auth); }
+        catch (e) { console.error('Sign out failed:', e); }
+      });
+
+      // Defensive DOM lookups (module executes before non-module defines globals)
+      function enableAppControls(enabled) {
+        const textInput   = document.getElementById('textInput');
+        const recordBtn   = document.getElementById('recordBtn');
+        const sendBtn     = document.getElementById('sendBtn');
+        const sendTextBtn = document.getElementById('sendTextBtn');
+        const pauseBtn    = document.getElementById('pauseBtn');
+        const player      = document.getElementById('player');
+        const voiceAct    = document.getElementById('voiceActions');
+        const toggleBtn   = document.getElementById('toggleSidebarBtn');
+
+        if (textInput)   textInput.disabled   = !enabled;
+        if (recordBtn)   recordBtn.disabled   = !enabled || !safeValidate();
+        if (sendTextBtn) sendTextBtn.disabled = !enabled || !(textInput?.value.trim()) || !safeValidate();
+        if (pauseBtn)    pauseBtn.disabled    = !enabled;
+        if (toggleBtn)   toggleBtn.disabled   = !enabled;
+
+        if (!enabled) {
+          try { player.pause(); player.removeAttribute('src'); player.load(); } catch {}
+          try { if (voiceAct) voiceAct.style.display = 'none'; } catch {}
+        }
       }
-    } else {
-      alert('Email sign-in failed: ' + (e?.message || e));
-    }
-  }
-});
-// Phone login needs reCAPTCHA
-// One single, unified auth state handler
-   function enableAppControls(enabled) {
-  textInput.disabled   = !enabled;
-  recordBtn.disabled   = !enabled || !validateLangs();
-  sendBtn.disabled     = true; // only enabled after a recording exists
-  sendTextBtn.disabled = !enabled || !textInput.value.trim() || !validateLangs();
 
-  try { pauseBtn.disabled = !enabled; } catch {}
-  try { document.getElementById('toggleSidebarBtn').disabled = !enabled; } catch {}
+      onAuthStateChanged(auth, async (user) => {
+        window.__auth.user = user || null;
 
-  if (!enabled) {
-    try { player.pause(); player.removeAttribute('src'); player.load(); } catch {}
-    try { lastBlob = null; } catch {}
-    try { document.getElementById('voiceActions').style.display = 'none'; } catch {}
-  }
-} 
-let appVerifier; // reCAPTCHA verifier (created once)
+        if (user) {
+          userNameEl.textContent  = user.displayName || '';
+          userEmailEl.textContent = user.email || '';
+          if (user.photoURL) {
+            userPhotoEl.src = user.photoURL;
+            userPhotoEl.style.display = '';
+          } else userPhotoEl.style.display = 'none';
 
-onAuthStateChanged(auth, async (user) => {
-  // Make sure reCAPTCHA exists (needed for phone login)
-  try {
-    if (!appVerifier) {
-      appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-    }
-  } catch (_) {}
+          profileNameEl.textContent  = user.displayName || '';
+          profileEmailEl.textContent = user.email || '';
+          if (user.photoURL) {
+            userAvatarEl.textContent = '';
+            userAvatarEl.style.backgroundImage = `url(${user.photoURL})`;
+            userAvatarEl.style.backgroundSize = 'cover';
+            userAvatarEl.style.backgroundPosition = 'center';
+          } else {
+            userAvatarEl.style.backgroundImage = '';
+            userAvatarEl.textContent = '👤';
+          }
 
-  // Cache user globally
-  window.__auth.user = user || null;
+          authScreen.style.display   = 'none';
+          appContainer.style.display = '';
+          authBar.style.display      = '';
+          loginReqEl.style.display   = 'none';
 
-  const authScreen   = document.getElementById('authScreen');
-  const appContainer = document.querySelector('.app-container');
-  const authBar      = document.getElementById('authBar');
-  const loginReqEl   = document.getElementById('loginRequired');
+          try { if (window.syncChatsFromFirestore) await window.syncChatsFromFirestore(user.uid); } catch {}
+          enableAppControls(true);
+        } else {
+          userNameEl.textContent  = '';
+          userEmailEl.textContent = '';
+          userPhotoEl.style.display = 'none';
+          profileNameEl.textContent  = '';
+          profileEmailEl.textContent = '';
+          userAvatarEl.style.backgroundImage = '';
+          userAvatarEl.textContent = '👤';
 
-  const userNameEl   = document.getElementById('userName');
-  const userEmailEl  = document.getElementById('userEmail');
-  const userPhotoEl  = document.getElementById('userPhoto');
+          authScreen.style.display   = 'grid';
+          appContainer.style.display = 'none';
+          authBar.style.display      = 'none';
+          loginReqEl.style.display   = 'none';
 
-  if (user) {
-    // ---------- LOGGED IN ----------
-    // Fill top-bar user info
-    userNameEl.textContent  = user.displayName || '';
-    userEmailEl.textContent = user.email || '';
-    if (user.photoURL) {
-      userPhotoEl.src = user.photoURL;
-      userPhotoEl.style.display = '';
-    } else {
-      userPhotoEl.style.display = 'none';
-    }
+          enableAppControls(false);
+          window.__auth.lastIdToken = null;
+        }
+      });
 
-    // Sidebar profile
-    document.getElementById('profileName').textContent  = user.displayName || '';
-    document.getElementById('profileEmail').textContent = user.email || '';
-    const avatar = document.getElementById('userAvatar');
-    if (user.photoURL) {
-      avatar.textContent = '';
-      avatar.style.backgroundImage  = `url(${user.photoURL})`;
-      avatar.style.backgroundSize   = 'cover';
-      avatar.style.backgroundPosition = 'center';
-    } else {
-      avatar.style.backgroundImage = '';
-      avatar.textContent = '👤';
-    }
-
-    // Show app, hide auth prompts
-    authScreen.style.display   = 'none';
-    appContainer.style.display = '';      // show the app
-    authBar.style.display      = '';      // show the top bar
-    loginReqEl.style.display   = 'none';  // hide the old banner
-
-    // Optional: load user’s chats & enable UI
-    try { await syncChatsFromFirestore(user.uid); } catch {}
-    enableAppControls(true);
-
-  } else {
-    // ---------- LOGGED OUT ----------
-    // Clear visible user info
-    userNameEl.textContent  = '';
-    userEmailEl.textContent = '';
-    userPhotoEl.style.display = 'none';
-    document.getElementById('profileName').textContent  = '';
-    document.getElementById('profileEmail').textContent = '';
-    const avatar = document.getElementById('userAvatar');
-    avatar.style.backgroundImage = '';
-    avatar.textContent = '👤';
-
-    // Show the full-screen login, hide app
-    authScreen.style.display   = 'grid';  // the card with buttons
-    appContainer.style.display = 'none';
-    authBar.style.display      = 'none';
-
-    // Hide the thin “Please sign in …” banner completely
-    loginReqEl.style.display   = 'none';
-
-    enableAppControls(false);
-    window.__auth.lastIdToken = null;
-  }
-});
-
-      // Toggle the language settings view
+      // Lang card toggles (module side)
       const langCard = document.getElementById('langCard');
       const langSettings = document.getElementById('langSettings');
       const langLabel = document.getElementById('langLabel');
-      langCard.addEventListener('click', () => {
+      langCard?.addEventListener('click', ()=>{
         const open = langSettings.style.display !== 'none';
         langSettings.style.display = open ? 'none' : 'block';
       });
-      // Update the language label when selections change
-      const speakSelect = document.getElementById('speakLang');
-      const answerSelect = document.getElementById('answerLang');
-      // ---- Language persistence (localStorage) ----
-const LANG_KEY = "kid_lang_v1";
-function saveLangPrefs() {
-  const data = {
-    speak: speakSelect.value || "",
-    answer: answerSelect.value || ""
-  };
-  localStorage.setItem(LANG_KEY, JSON.stringify(data));
-}
-window.loadLangPrefs=function loadLangPrefs() {
-  try {
-    const data = JSON.parse(localStorage.getItem(LANG_KEY));
-    if (!data) return;
-    if (data.speak) {
-      speakSelect.value = data.speak;
-      const mobileSpeakSel = document.getElementById('mobileSpeakLang');
-      if (mobileSpeakSel) mobileSpeakSel.value = data.speak;
-    }
-    if (data.answer) {
-      answerSelect.value = data.answer;
-      const mobileAnsSel = document.getElementById('mobileAnswerLang');
-      if (mobileAnsSel) mobileAnsSel.value = data.answer;
-    }
-    updateLangLabel();
-  } catch {}
-}
 
-      window.updateLangLabel =function updateLangLabel() {
+      const speakSelect  = document.getElementById('speakLang');
+      const answerSelect = document.getElementById('answerLang');
+
+      const LANG_KEY = "kid_lang_v1";
+      function saveLangPrefs() {
+        const data = { speak: speakSelect.value || "", answer: answerSelect.value || "" };
+        localStorage.setItem(LANG_KEY, JSON.stringify(data));
+      }
+      window.loadLangPrefs = function(){
+        try {
+          const data = JSON.parse(localStorage.getItem(LANG_KEY));
+          if (!data) return;
+          if (data.speak) {
+            speakSelect.value = data.speak;
+            const mobileSpeakSel = document.getElementById('mobileSpeakLang');
+            if (mobileSpeakSel) mobileSpeakSel.value = data.speak;
+          }
+          if (data.answer) {
+            answerSelect.value = data.answer;
+            const mobileAnsSel = document.getElementById('mobileAnswerLang');
+            if (mobileAnsSel) mobileAnsSel.value = data.answer;
+          }
+          updateLangLabel();
+        } catch {}
+      }
+
+      window.updateLangLabel = function(){
         const speak = speakSelect.value || 'Speaking';
         const ans   = answerSelect.value || 'Answer';
         langLabel.textContent = speak + ' → ' + ans;
-        // Also update the mobile language label if it exists
         const mobileLabel = document.getElementById('mobileLangLabel');
-        if (mobileLabel) {
-          mobileLabel.textContent = speak + ' → ' + ans;
-        }
+        if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
       }
-      speakSelect.addEventListener('change', () => {
-        // sync mobile select when desktop select changes
+
+      function safeValidateAndSave(){ safeValidate(); saveLangPrefs(); }
+
+      speakSelect?.addEventListener('change', ()=>{
         const mobileSpeak = document.getElementById('mobileSpeakLang');
-        if (mobileSpeak && mobileSpeak.value !== speakSelect.value) {
-          mobileSpeak.value = speakSelect.value;
-        }
-        updateLangLabel();
-        validateLangs();
-        saveLangPrefs();
+        if (mobileSpeak && mobileSpeak.value !== speakSelect.value) mobileSpeak.value = speakSelect.value;
+        updateLangLabel(); safeValidateAndSave();
       });
-      answerSelect.addEventListener('change', () => {
-        // sync mobile select when desktop select changes
+      answerSelect?.addEventListener('change', ()=>{
         const mobileAnswer = document.getElementById('mobileAnswerLang');
-        if (mobileAnswer && mobileAnswer.value !== answerSelect.value) {
-          mobileAnswer.value = answerSelect.value;
-        }
-        updateLangLabel();
-        validateLangs();
-        saveLangPrefs();
+        if (mobileAnswer && mobileAnswer.value !== answerSelect.value) mobileAnswer.value = answerSelect.value;
+        updateLangLabel(); safeValidateAndSave();
       });
 
-      // Mobile language selector logic
       const mobileLangCard = document.getElementById('mobileLangCard');
       const mobileLangSettings = document.getElementById('mobileLangSettings');
-      if (mobileLangCard) {
-        mobileLangCard.addEventListener('click', () => {
-          const open = mobileLangSettings.style.display !== 'none';
-          mobileLangSettings.style.display = open ? 'none' : 'block';
-        });
-      }
+      mobileLangCard?.addEventListener('click', ()=>{
+        const open = mobileLangSettings.style.display !== 'none';
+        mobileLangSettings.style.display = open ? 'none' : 'block';
+      });
       const mobileSpeak = document.getElementById('mobileSpeakLang');
       const mobileAnswer = document.getElementById('mobileAnswerLang');
+
       function updateMobileLangLabel() {
         const speak = mobileSpeak.value || 'Speaking';
         const ans   = mobileAnswer.value || 'Answer';
         const mobileLabel = document.getElementById('mobileLangLabel');
         if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
       }
-      if (mobileSpeak) {
-        mobileSpeak.addEventListener('change', () => {
-          // sync desktop select when mobile select changes
-          if (speakSelect.value !== mobileSpeak.value) {
-            speakSelect.value = mobileSpeak.value;
-            // update all dependent states
-            updateLangLabel();
-            validateLangs();
-          }
-          updateMobileLangLabel();
-        });
-      }
-      if (mobileAnswer) {
-        mobileAnswer.addEventListener('change', () => {
-          if (answerSelect.value !== mobileAnswer.value) {
-            answerSelect.value = mobileAnswer.value;
-            updateLangLabel();
-            validateLangs();
-          }
-          updateMobileLangLabel();
-        });
+      mobileSpeak?.addEventListener('change', ()=>{
+        if (speakSelect.value !== mobileSpeak.value) {
+          speakSelect.value = mobileSpeak.value;
+          updateLangLabel(); safeValidate();
+        }
+        updateMobileLangLabel();
+      });
+      mobileAnswer?.addEventListener('change', ()=>{
+        if (answerSelect.value !== mobileAnswer.value) {
+          answerSelect.value = mobileAnswer.value;
+          updateLangLabel(); safeValidate();
+        }
+        updateMobileLangLabel();
+      });
+
+      // Expose sync function name for optional call above
+      window.syncChatsFromFirestore = async function(uid){ /* no-op placeholder */ };
+    </script>
+
+    <!-- Non-module libs -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script>
+      function renderMD(mdText){
+        const normalized=(mdText||"").replace(/\r\n/g,"\n");
+        const html=marked.parse(normalized,{breaks:true,gfm:true});
+        return DOMPurify.sanitize(html);
       }
     </script>
-    <!-- Existing application script preserved for chat functionality -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-<script>
-  function renderMD(mdText) {
-    const normalized = (mdText || "").replace(/\r\n/g, "\n");
-    const html = marked.parse(normalized, { breaks: true, gfm: true });
-    return DOMPurify.sanitize(html);
-  }
-</script>
+
+    <!-- APP logic (non-module) -->
     <script>
       const API_BASE = "https://elearning-for-kids.onrender.com";
+
       // ---------- DOM ----------
       const chatList    = document.getElementById('chatList');
       const newChatBtn  = document.getElementById('newChatBtn');
@@ -1012,6 +573,7 @@ window.loadLangPrefs=function loadLangPrefs() {
       const loadingBar  = document.getElementById('loadingBar');
       const textInput   = document.getElementById('textInput');
       const sendTextBtn = document.getElementById('sendTextBtn');
+
       // ---------- Local storage helpers ----------
       const LS_KEY = "kid_chats_v1";
       function loadAllChats(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)) || []; }catch{ return []; } }
@@ -1020,7 +582,6 @@ window.loadLangPrefs=function loadLangPrefs() {
         const id = crypto.randomUUID();
         const chat = { id, title: "New chat", createdAt: Date.now(), messages: [] };
         const list = loadAllChats(); list.unshift(chat); saveAllChats(list);
-        // Firestore: create chat
         const user = window.__auth?.user;
         if (user) createFirestoreChat(user.uid, id, chat.title);
         return chat;
@@ -1032,259 +593,162 @@ window.loadLangPrefs=function loadLangPrefs() {
         if (idx>=0){ list[idx]=chat; } else { list.unshift(chat); }
         saveAllChats(list);
       }
-      function deleteChat(id) {
-  if (!id) return;
-  if (!confirm('Delete this chat? This cannot be undone.')) return;
-
-  // 1) local storage removal
-  const list = loadAllChats().filter(c => c.id !== id);
-  saveAllChats(list);
-
-  // 2) Firestore removal (best-effort)
-  const user = window.__auth?.user;
-  if (user) {
-    deleteFirestoreChat(user.uid, id).catch(e => console.warn('Firestore delete failed:', e));
-  }
-
-  // 3) fix current selection
-  if (currentChatId === id) {
-    if (list.length) {
-      currentChatId = list[0].id;
-      loadChat(currentChatId);
-    } else {
-      // No chats left — create a fresh one
-      const c = createChat();
-      loadChat(c.id);
-    }
-  } else {
-    renderChatList();
-  }
-
-  // UI status
-  statusEl.textContent = 'Chat deleted.';
-}
-      function deleteAllChats() {
-  if (!confirm('Delete ALL chats? This cannot be undone.')) return;
-
-  // local wipe
-  saveAllChats([]);
-
-  // Firestore wipe (best-effort)
-  const user = window.__auth?.user;
-  if (user) {
-    // get all chats from Firestore and delete
-    (async () => {
-      try {
-        const { db, collection, getDocs } = window.__db;
-        const chatsCol = collection(db, 'users', user.uid, 'chats');
-        const snap = await getDocs(chatsCol);
-        for (const docSnap of snap.docs) {
-          await deleteFirestoreChat(user.uid, docSnap.id);
-        }
-      } catch (e) {
-        console.warn('Firestore clear all failed:', e);
+      function deleteChat(id){
+        if (!id) return;
+        if (!confirm('Delete this chat? This cannot be undone.')) return;
+        const list = loadAllChats().filter(c=>c.id!==id);
+        saveAllChats(list);
+        const user = window.__auth?.user;
+        if (user) { deleteFirestoreChat(user.uid, id).catch(e=>console.warn('Firestore delete failed:',e)); }
+        if (currentChatId===id){
+          if (list.length){ currentChatId=list[0].id; loadChat(currentChatId); }
+          else { const c=createChat(); loadChat(c.id); }
+        } else renderChatList();
+        statusEl.textContent='Chat deleted.';
       }
-    })();
-  }
-
-  // reset UI
-  const c = createChat();
-  loadChat(c.id);
-  statusEl.textContent = 'All chats cleared.';
-}
-
+      function deleteAllChats(){
+        if (!confirm('Delete ALL chats? This cannot be undone.')) return;
+        saveAllChats([]);
+        const user = window.__auth?.user;
+        if (user){
+          (async()=>{
+            try{
+              const { db, collection, getDocs } = window.__db;
+              const chatsCol = collection(db,'users',user.uid,'chats');
+              const snap = await getDocs(chatsCol);
+              for (const docSnap of snap.docs){ await deleteFirestoreChat(user.uid, docSnap.id); }
+            }catch(e){ console.warn('Firestore clear all failed:',e); }
+          })();
+        }
+        const c=createChat(); loadChat(c.id);
+        statusEl.textContent='All chats cleared.';
+      }
 
       function setTitleIfEmpty(chat, firstUserText){
         if (!firstUserText) return;
         if (chat.title==="New chat" || !chat.title){
-          chat.title = firstUserText.slice(0, 40) + (firstUserText.length>40 ? "…" : "");
+          chat.title = firstUserText.slice(0,40) + (firstUserText.length>40 ? "…" : "");
         }
       }
+
       // Firestore helpers
       async function createFirestoreChat(uid, chatId, title){
         const { db, doc, setDoc, serverTimestamp } = window.__db;
         try {
-          const chatRef = doc(db, 'users', uid, 'chats', chatId);
-          await setDoc(chatRef, { title, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), lastSnippet: '' }, { merge:true });
-        } catch (e) { console.error('Failed to create chat in Firestore', e); }
+          const chatRef = doc(db,'users',uid,'chats',chatId);
+          await setDoc(chatRef,{ title, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), lastSnippet: '' },{ merge:true });
+        } catch(e){ console.error('Failed to create chat in Firestore', e); }
       }
-      async function saveTurnToFirestore(uid, chatId, userText, assistantText, speakLang, answerLang) {
-  const { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, increment, writeBatch } = window.__db;
-  try {
-    const chatRef = doc(db, 'users', uid, 'chats', chatId);
-    const msgsCol = collection(db, 'users', uid, 'chats', chatId, 'messages');
+      async function saveTurnToFirestore(uid, chatId, userText, assistantText, speakLang, answerLang){
+        const { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, increment, writeBatch } = window.__db;
+        try {
+          const chatRef = doc(db,'users',uid,'chats',chatId);
+          const msgsCol = collection(db,'users',uid,'chats',chatId,'messages');
+          await setDoc(chatRef,{
+            title: (userText&&userText.trim()) ? userText.trim().slice(0,40)+(userText.trim().length>40?'…':'') : 'Chat',
+            createdAt: serverTimestamp(),
+          },{ merge:true });
 
-    // Create the chat doc if it doesn't exist yet (title defaults to first user text)
-    await setDoc(chatRef, {
-      title: (userText && userText.trim()) ? userText.trim().slice(0, 40) + (userText.trim().length > 40 ? '…' : '') : 'Chat',
-      createdAt: serverTimestamp(),
-    }, { merge: true });
+          const batch = writeBatch(db); let wroteCount=0;
+          if (userText){
+            const userMsgRef = doc(msgsCol);
+            batch.set(userMsgRef,{ role:'user', content:userText, speakLanguage:speakLang, answerLanguage:answerLang, createdAt:serverTimestamp() });
+            wroteCount++;
+          }
+          if (assistantText){
+            const asstMsgRef = doc(msgsCol);
+            batch.set(asstMsgRef,{ role:'assistant', content:assistantText, speakLanguage:speakLang, answerLanguage:answerLang, createdAt:serverTimestamp() });
+            batch.update(chatRef,{ updatedAt:serverTimestamp(), lastSnippet:(assistantText||'').slice(0,120) });
+            wroteCount++;
+          }
+          if (wroteCount>0){ batch.update(chatRef,{ messageCount: increment(wroteCount) }); }
+          await batch.commit();
+        } catch(e){ console.error('Failed to save turn to Firestore', e); }
+      }
+      async function deleteFirestoreChat(uid, chatId){
+        const { db, collection, getDocs, doc } = window.__db;
+        const msgsCol = collection(db,'users',uid,'chats',chatId,'messages');
+        const snap = await getDocs(msgsCol);
+        const batchDeletes=[]; snap.forEach(m=>batchDeletes.push(m.ref.delete?m.ref.delete():null));
+        await Promise.all(batchDeletes);
+        const chatRef = doc(db,'users',uid,'chats',chatId);
+        try { const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js'); await deleteDoc(chatRef); }
+        catch(e){ const { deleteDoc } = window.__db; await deleteDoc(chatRef); }
+      }
 
-    const batch = writeBatch(db);
-    let wroteCount = 0;
-
-    if (userText) {
-      // Use addDoc for auto-ID, but add it via batch by pre-creating a doc ref
-      const userMsgRef = doc(msgsCol); // auto-id
-      batch.set(userMsgRef, {
-        role: 'user',
-        content: userText,
-        speakLanguage: speakLang,
-        answerLanguage: answerLang,
-        createdAt: serverTimestamp()
-      });
-      wroteCount++;
-    }
-
-    if (assistantText) {
-      const asstMsgRef = doc(msgsCol);
-      batch.set(asstMsgRef, {
-        role: 'assistant',
-        content: assistantText,
-        speakLanguage: speakLang,
-        answerLanguage: answerLang,
-        createdAt: serverTimestamp()
-      });
-      // Update chat metadata as part of the same atomic batch
-      batch.update(chatRef, {
-        updatedAt: serverTimestamp(),
-        lastSnippet: (assistantText || '').slice(0, 120)
-      });
-      wroteCount++;
-    }
-
-    if (wroteCount > 0) {
-      // Maintain a rolling counter for analytics/badges if you like
-      batch.update(chatRef, {
-        messageCount: increment(wroteCount)
-      });
-    }
-
-    await batch.commit();
-  } catch (e) {
-    console.error('Failed to save turn to Firestore', e);
-  }
-}
-
-      async function deleteFirestoreChat(uid, chatId) {
-  const { db, collection, getDocs, doc } = window.__db;
-  // Delete subcollection messages in small batches
-  const msgsCol = collection(db, 'users', uid, 'chats', chatId, 'messages');
-  const snap = await getDocs(msgsCol);
-  const batchDeletes = [];
-  snap.forEach(m => batchDeletes.push(m.ref.delete ? m.ref.delete() : null));
-  await Promise.all(batchDeletes);
-
-  // Delete chat doc itself
-  const chatRef = doc(db, 'users', uid, 'chats', chatId);
-  try { await (await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js')).deleteDoc(chatRef); }
-  catch (e) {
-    // Older SDK import pattern fallback
-    const { deleteDoc } = window.__db;
-    await deleteDoc(chatRef);
-  }
-}
-      // ----- USER MEMORY (long-term) -----
-// ---- Memory & summary helpers ----
-async function loadUserMemory(uid) {
-  const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-  const ref = doc(db, 'users', uid, 'meta', 'memory');
-  const snap = await getDoc(ref);
-  return snap.exists() ? snap.data() : {};
-}
-async function saveUserMemory(uid, patch) {
-  const { db, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-  const ref = doc(db, 'users', uid, 'meta', 'memory');
-  await setDoc(ref, patch, { merge: true });
-}
-
-async function loadChatSummary(uid, chatId) {
-  const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-  const ref = doc(db, 'users', uid, 'chats', chatId);
-  const snap = await getDoc(ref);
-  return snap.exists() ? (snap.data().summary || '') : '';
-}
-async function saveChatSummary(uid, chatId, summary) {
-  const { db, doc, updateDoc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-  const ref = doc(db, 'users', uid, 'chats', chatId);
-  // ensure doc exists, then merge summary
-  try { await updateDoc(ref, { summary, updatedAt: serverTimestamp() }); }
-  catch { await setDoc(ref, { summary, updatedAt: serverTimestamp() }, { merge: true }); }
-}
+      // User memory helpers
+      async function loadUserMemory(uid){
+        const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+        const ref = doc(db,'users',uid,'meta','memory'); const snap = await getDoc(ref);
+        return snap.exists() ? snap.data() : {};
+      }
+      async function saveUserMemory(uid, patch){
+        const { db, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+        const ref = doc(db,'users',uid,'meta','memory'); await setDoc(ref, patch, { merge:true });
+      }
+      async function loadChatSummary(uid, chatId){
+        const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+        const ref = doc(db,'users',uid,'chats',chatId); const snap = await getDoc(ref);
+        return snap.exists() ? (snap.data().summary || '') : '';
+      }
+      async function saveChatSummary(uid, chatId, summary){
+        const { db, doc, updateDoc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+        const ref = doc(db,'users',uid,'chats',chatId);
+        try { await updateDoc(ref,{ summary, updatedAt:serverTimestamp() }); }
+        catch { await setDoc(ref,{ summary, updatedAt:serverTimestamp() },{ merge:true }); }
+      }
 
       // ---------- UI: render chat list ----------
       let currentChatId = null;
       function renderChatList(){
-        const list = loadAllChats();
-        chatList.innerHTML = "";
+        const list=loadAllChats(); chatList.innerHTML="";
         list.forEach(chat=>{
-          const div = document.createElement("div");
-          div.className = "chatitem" + (chat.id===currentChatId ? " active":"");
-          const d = new Date(chat.createdAt);
-          const when = d.toLocaleDateString() + " " + d.toLocaleTimeString();
-          div.innerHTML = `
-  <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem;">
-    <div>
-      <div style="font-weight:600">${chat.title}</div>
-      <div style="font-size:.85rem;color:#666">${when}</div>
-    </div>
-    <button class="chat-del" title="Delete this chat" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">🗑️</button>
-  </div>
-`;
-          div.onclick = () => loadChat(chat.id);
-    const delBtn = div.querySelector('.chat-del');
-    delBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteChat(chat.id);
-    });
-
-
+          const div=document.createElement("div");
+          div.className="chatitem"+(chat.id===currentChatId?" active":"");
+          const d=new Date(chat.createdAt);
+          const when=d.toLocaleDateString()+" "+d.toLocaleTimeString();
+          div.innerHTML=`
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+              <div>
+                <div style="font-weight:600">${chat.title}</div>
+                <div style="font-size:.85rem;color:#666">${when}</div>
+              </div>
+              <button class="chat-del" title="Delete this chat" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">🗑️</button>
+            </div>`;
+          div.onclick=()=>loadChat(chat.id);
+          const delBtn=div.querySelector('.chat-del');
+          delBtn.addEventListener('click',(e)=>{ e.stopPropagation(); deleteChat(chat.id); });
           chatList.appendChild(div);
         });
       }
       function loadChat(id){
-        currentChatId = id;
-        renderChatList();
-        const chat = getChat(id);
-        // Show last turn in the simple boxes
+        currentChatId=id; renderChatList();
+        const chat=getChat(id);
         if (chat && chat.messages.length){
-          const lastUser = [...chat.messages].reverse().find(m=>m.role==="user");
-          const lastAsst = [...chat.messages].reverse().find(m=>m.role==="assistant");
-          transcriptEl.textContent = lastUser?.content || "—";
-          answerEl.textContent = lastAsst?.content || "—";
-        } else {
-          transcriptEl.textContent = "—";
-          answerEl.textContent = "—";
-        }
+          const lastUser=[...chat.messages].reverse().find(m=>m.role==="user");
+          const lastAsst=[...chat.messages].reverse().find(m=>m.role==="assistant");
+          transcriptEl.textContent=lastUser?.content || "—";
+          answerEl.textContent=lastAsst?.content || "—";
+        } else { transcriptEl.textContent="—"; answerEl.textContent="—"; }
         player.removeAttribute("src"); player.load();
-        loadingBar.style.display = "none";
-        statusEl.textContent = "Loaded chat. Record a follow-up, type a question or start a New chat.";
-        lastBlob = null;
+        loadingBar.style.display="none";
+        statusEl.textContent="Loaded chat. Record a follow-up, type a question or start a New chat.";
+        lastBlob=null;
         validateLangs();
-        // Render the full message thread
         renderThread();
       }
-      // Boot: ensure at least one chat exists
       (function initChats(){
-        const all = loadAllChats();
-        if (all.length===0){
-          const c = createChat();
-          currentChatId = c.id;
-        } else {
-          currentChatId = all[0].id;
-        }
+        const all=loadAllChats();
+        if (all.length===0){ const c=createChat(); currentChatId=c.id; }
+        else { currentChatId=all[0].id; }
         renderChatList();
       })();
-      newChatBtn.addEventListener('click', ()=>{
-        const c = createChat();
-        loadChat(c.id);
-      });
-      const clearAllBtn = document.getElementById('clearAllBtn');
-clearAllBtn.addEventListener('click', deleteAllChats);
+      newChatBtn.addEventListener('click', ()=>{ const c=createChat(); loadChat(c.id); });
+      document.getElementById('clearAllBtn').addEventListener('click', deleteAllChats);
 
-      // ---------- Recording (same as before with Pause/Resume) ----------
-      let mediaRecorder, chunks = [], isRecording = false, startTs = 0, tickInt = null, lastBlob = null;
-      function validateLangs() {
+      // ---------- Recording ----------
+      let mediaRecorder, chunks=[], isRecording=false, startTs=0, tickInt=null, lastBlob=null;
+      function validateLangs(){
         const ok = speakLangSel.value && answerLangSel.value;
         recordBtn.disabled = !ok || !window.__auth?.user;
         sendBtn.disabled   = !ok || !lastBlob || !window.__auth?.user;
@@ -1294,637 +758,311 @@ clearAllBtn.addEventListener('click', deleteAllChats);
       speakLangSel.addEventListener('change', validateLangs);
       answerLangSel.addEventListener('change', validateLangs);
       textInput.addEventListener('input', validateLangs);
-      async function getStream() {
-        try { return await navigator.mediaDevices.getUserMedia({ audio: true }); }
-        catch { alert("Microphone permission is required."); throw new Error("no-mic"); }
-      }
+
+      async function getStream(){ try{ return await navigator.mediaDevices.getUserMedia({audio:true}); }catch{ alert("Microphone permission is required."); throw new Error("no-mic"); } }
       function fmt(sec){const m=String(Math.floor(sec/60)).padStart(2,'0');const s=String(Math.floor(sec%60)).padStart(2,'0');return `${m}:${s}`;}
       function startTimer(){timerBadge.style.display='inline-block';startTs=Date.now();tickInt=setInterval(()=>{timerBadge.textContent=fmt((Date.now()-startTs)/1000);},250);}
-      function stopTimer(){clearInterval(tickInt);tickInt=null; timerBadge.style.display='none';}
-      async function toggleRecording() {
-        // Only allow recording if logged in
-        if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
-        if (!validateLangs()) { statusEl.textContent = "Please select both languages first."; return; }
-        if (!isRecording) {
-          statusEl.textContent = 'Recording…';
-          const stream = await getStream();
-          chunks = [];
-          mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-          mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-          mediaRecorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'audio/webm' });
-            lastBlob = blob;
-            if (blob.size < 5000) {
-  statusEl.textContent = 'Too short. Record at least 1 second.';
-  sendBtn.disabled = true;
-  voiceActions.style.display = 'none';   // <--- HIDE actions
-} else {
-  statusEl.textContent = 'Recording saved. Tap Send or Delete.';
-  sendBtn.disabled = !validateLangs();
-  voiceActions.style.display = 'flex';   // <--- SHOW actions
-}
+      function stopTimer(){clearInterval(tickInt);tickInt=null;timerBadge.style.display='none';}
 
+      async function toggleRecording(){
+        if (!window.__auth?.user){ statusEl.textContent="Please sign in first."; return; }
+        if (!validateLangs()){ statusEl.textContent="Please select both languages first."; return; }
+        if (!isRecording){
+          statusEl.textContent='Recording…';
+          const stream=await getStream();
+          chunks=[]; mediaRecorder=new MediaRecorder(stream,{ mimeType:'audio/webm;codecs=opus' });
+          mediaRecorder.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+          mediaRecorder.onstop=()=>{
+            const blob=new Blob(chunks,{type:'audio/webm'}); lastBlob=blob;
+            if (blob.size<5000){ statusEl.textContent='Too short. Record at least 1 second.'; sendBtn.disabled=true; voiceActions.style.display='none'; }
+            else { statusEl.textContent='Recording saved. Tap Send or Delete.'; sendBtn.disabled=!validateLangs(); voiceActions.style.display='flex'; }
           };
-          mediaRecorder.start();
-          isRecording = true;
-          recordBtn.textContent = "⏹";
-          recordBtn.classList.add('recording');
-          pauseBtn.style.display = 'inline-flex'; pauseBtn.disabled = false; pauseBtn.textContent = "⏸";
+          mediaRecorder.start(); isRecording=true; recordBtn.textContent="⏹"; recordBtn.classList.add('recording');
+          pauseBtn.style.display='inline-flex'; pauseBtn.disabled=false; pauseBtn.textContent="⏸";
           startTimer();
         } else {
-          stopTimer();
-          statusEl.textContent = 'Processing recording…';
-          isRecording = false;
-          recordBtn.textContent = "🎙️";
-          recordBtn.classList.remove('recording');
-          pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
-          try { mediaRecorder.stop(); } catch {}
+          stopTimer(); statusEl.textContent='Processing recording…';
+          isRecording=false; recordBtn.textContent="🎙️"; recordBtn.classList.remove('recording');
+          pauseBtn.style.display='none'; pauseBtn.disabled=true;
+          try{ mediaRecorder.stop(); }catch{}
         }
       }
       recordBtn.addEventListener('click', toggleRecording);
-      // --- Long-press recording (WhatsApp style) ---
-let pressTimer = null;
-let didStartByLongPress = false;
 
-function startRecordingNow() {
-  didStartByLongPress = true;
-  if (!isRecording) toggleRecording();
-}
-function stopRecordingNow() {
-  if (isRecording) toggleRecording();
-}
-function handlePressStart(e) {
-  if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
-  if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
-  e.preventDefault();
-  didStartByLongPress = false;
-  pressTimer = setTimeout(startRecordingNow, 300);
-}
-function handlePressEnd(e) {
-  e.preventDefault();
-  clearTimeout(pressTimer); pressTimer = null;
-  if (didStartByLongPress) {
-    stopRecordingNow();
-  }
-}
-function handlePressCancel() {
-  clearTimeout(pressTimer); pressTimer = null;
-}
+      // Long-press
+      let pressTimer=null, didStartByLongPress=false;
+      function startRecordingNow(){ didStartByLongPress=true; if(!isRecording) toggleRecording(); }
+      function stopRecordingNow(){ if(isRecording) toggleRecording(); }
+      function handlePressStart(e){ if(!window.__auth?.user){ statusEl.textContent="Please sign in first."; return; } if(!validateLangs()){ statusEl.textContent="Please select both languages."; return; } e.preventDefault(); didStartByLongPress=false; pressTimer=setTimeout(startRecordingNow,300); }
+      function handlePressEnd(e){ e.preventDefault(); clearTimeout(pressTimer); pressTimer=null; if(didStartByLongPress){ stopRecordingNow(); } }
+      function handlePressCancel(){ clearTimeout(pressTimer); pressTimer=null; }
+      recordBtn.addEventListener('mousedown',handlePressStart);
+      recordBtn.addEventListener('mouseup',handlePressEnd);
+      recordBtn.addEventListener('mouseleave',handlePressCancel);
+      recordBtn.addEventListener('touchstart',handlePressStart,{passive:false});
+      recordBtn.addEventListener('touchend',handlePressEnd);
+      recordBtn.addEventListener('touchcancel',handlePressCancel);
 
-// Desktop + Mobile
-recordBtn.addEventListener('mousedown', handlePressStart);
-recordBtn.addEventListener('mouseup', handlePressEnd);
-recordBtn.addEventListener('mouseleave', handlePressCancel);
-recordBtn.addEventListener('touchstart', handlePressStart, { passive:false });
-recordBtn.addEventListener('touchend', handlePressEnd);
-recordBtn.addEventListener('touchcancel', handlePressCancel);
+      const voiceActions = document.getElementById('voiceActions');
+      document.getElementById('voiceSendBtn').addEventListener('click', async()=>{ await sendAudio(); voiceActions.style.display='none'; });
+      document.getElementById('voiceDiscardBtn').addEventListener('click', ()=>{ lastBlob=null; sendBtn.disabled=true; statusEl.textContent='Recording discarded.'; voiceActions.style.display='none'; });
 
-// Voice action buttons
-const voiceActions = document.getElementById('voiceActions');
-const voiceSendBtn = document.getElementById('voiceSendBtn');
-const voiceDiscardBtn = document.getElementById('voiceDiscardBtn');
-
-voiceSendBtn.addEventListener('click', async () => {
-  await sendAudio();
-  voiceActions.style.display = 'none';
-});
-voiceDiscardBtn.addEventListener('click', () => {
-  lastBlob = null;
-  sendBtn.disabled = true;
-  statusEl.textContent = 'Recording discarded.';
-  voiceActions.style.display = 'none';
-});
-
-      pauseBtn.addEventListener('click', () => {
+      pauseBtn.addEventListener('click', ()=>{
         if (!mediaRecorder) return;
-        if (mediaRecorder.state === 'recording') {
-          mediaRecorder.pause();
-          pauseBtn.textContent = "▶️";
-          statusEl.textContent = 'Paused. Resume or Stop.';
-        } else if (mediaRecorder.state === 'paused') {
-          mediaRecorder.resume();
-          pauseBtn.textContent = "⏸";
-          statusEl.textContent = 'Recording…';
-        }
+        if (mediaRecorder.state==='recording'){ mediaRecorder.pause(); pauseBtn.textContent="▶️"; statusEl.textContent='Paused. Resume or Stop.'; }
+        else if (mediaRecorder.state==='paused'){ mediaRecorder.resume(); pauseBtn.textContent="⏸"; statusEl.textContent='Recording…'; }
       });
-      // ---------- Send to server with history ----------
+
       function getHistoryForCurrentChat(limitTurns=6){
-        const chat = getChat(currentChatId);
-        if (!chat) return [];
-        const msgs = chat.messages || [];
-        return msgs.slice(-limitTurns*2); // last N user/assistant pairs
+        const chat=getChat(currentChatId); if(!chat) return [];
+        const msgs=chat.messages||[]; return msgs.slice(-limitTurns*2);
       }
       function appendTurnToChat(userText, assistantText){
-        const chat = getChat(currentChatId);
-        if (!chat) return;
-        if (userText)  chat.messages.push({ role:"user",      content:userText });
-        if (assistantText) chat.messages.push({ role:"assistant", content:assistantText });
-        setTitleIfEmpty(chat, userText);
-        updateChat(chat);
-        renderChatList();
-        // Firestore
-        const user = window.__auth?.user;
+        const chat=getChat(currentChatId); if(!chat) return;
+        if (userText) chat.messages.push({role:"user",content:userText});
+        if (assistantText) chat.messages.push({role:"assistant",content:assistantText});
+        setTitleIfEmpty(chat, userText); updateChat(chat); renderChatList();
+        const user=window.__auth?.user;
         if (user) saveTurnToFirestore(user.uid, chat.id, userText, assistantText, speakLangSel.value, answerLangSel.value);
-        // Update visible thread
         renderThread();
       }
-      async function getAuthHeader() {
-        const user = window.__auth?.user;
-        if (!user) return {};
-        try {
-          const token = await window.__auth.getIdToken(user, /*forceRefresh*/ false);
-          return { 'Authorization': 'Bearer ' + token };
-        } catch {
-          return {};
+      async function getAuthHeader(){
+        const user=window.__auth?.user; if(!user) return {};
+        try{ const token=await window.__auth.getIdToken(user,false); return { 'Authorization':'Bearer '+token }; }
+        catch{ return {}; }
+      }
+
+      // --- Single JSON-aware SSE reader (keep one) ---
+      async function readSSEStream(res, onEvent){
+        if (!res || !res.body) throw new Error('No response body to read');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
+        while(true){
+          const { value, done } = await reader.read(); if (done) break;
+          buf += decoder.decode(value,{stream:true});
+          const frames = buf.split('\n\n'); buf = frames.pop() || '';
+          for (const frame of frames){
+            const lines = frame.split('\n').map(l=>l.replace(/^data:\s?/, '')).filter(Boolean);
+            for (const line of lines){
+              let evt=null; try{ evt=JSON.parse(line); }catch{}
+              if (evt){ onEvent(evt); continue; }
+              onEvent({ type:'delta', delta: line });
+            }
+          }
         }
       }
-      async function readSSEStream(res, onToken) {
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    // Split on double newlines (SSE event separation)
-    let parts = buffer.split("\n\n");
-    buffer = parts.pop(); // last (maybe partial) chunk kept in buffer
-
-    for (const chunk of parts) {
-      // Each line typically starts with "data: "
-      const lines = chunk.split("\n").map(l => l.replace(/^data:\s?/, ""));
-      const data = lines.join("\n");
-
-      if (data === "[END]") return;      // server’s end marker
-      if (data) onToken(data);            // incremental token
-    }
-  }
-}
-
-      // async function sendAudio() {
-      //   if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
-      //   if (!lastBlob) { statusEl.textContent = "Please record something first."; return; }
-      //   if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
-      //   // Hide previous audio player
-      //   player.style.display = 'none';
-      //   loadingBar.style.display = 'block';
-      //   statusEl.textContent = "";
-      //   const fd = new FormData();
-      //   fd.append('audio', lastBlob, 'speech.webm');
-      //   fd.append('speakLanguage',  speakLangSel.value);
-      //   fd.append('answerLanguage', answerLangSel.value);
-      //   fd.append('conversationId', currentChatId);
-      //   fd.append('history', JSON.stringify(getHistoryForCurrentChat(6)));
-      //   fd.append('uid', window.__auth.user.uid);
-      //   try {
-      //     const headers = await getAuthHeader();
-      //     const res = await fetch(`${API_BASE}/api/ask`, { method: 'POST', body: fd, headers });
-      //     const json = await res.json();
-      //     if (!res.ok) {
-      //       loadingBar.style.display = 'none';
-      //       statusEl.textContent = json?.message || json?.error || 'Request failed';
-      //       return;
-      //     }
-      //     const { transcript, text, audioBase64 } = json;
-      //     appendTurnToChat(transcript || "", text || "");
-      //     // update transcript/answer (not visible but for reference)
-      //     transcriptEl.textContent = transcript || '—';
-      //     answerEl.textContent     = text || '—';
-      //     if (audioBase64) {
-      //       player.src = 'data:audio/mpeg;base64,' + audioBase64;
-      //       player.style.display = 'block';
-      //     } else {
-      //       player.removeAttribute('src');
-      //       player.style.display = 'none';
-      //     }
-      //     loadingBar.style.display = 'none';
-      //     // Show suggestions for next prompt
-      //     updateSuggestions();
-      //     statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-      //     lastBlob = null;
-      //     recordBtn.textContent = "🎙️";
-      //     recordBtn.classList.remove('recording');
-      //     sendBtn.disabled = true;
-      //     pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
-      //   } catch (e) {
-      //     console.error(e);
-      //     loadingBar.style.display = 'none';
-      //     statusEl.textContent = "Network error. Try again.";
-      //   }
-      // }
-      async function sendAudio() {
-  if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
-  if (!lastBlob) { statusEl.textContent = "Please record something first."; return; }
-  if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
-
-  player.style.display = 'none';
-  loadingBar.style.display = 'block';
-  statusEl.textContent = "";
-
-  // Create a pending user bubble that we will replace with the transcript
-const threadEl = document.getElementById('chatThread');
-const userBubble = document.createElement('div');
-userBubble.className = 'msg user';
-userBubble.textContent = '🎤 (processing transcript…)';
-threadEl.appendChild(userBubble);
-threadEl.scrollTop = threadEl.scrollHeight;
-
-    const fd = new FormData();
-
-  // 🔹 NEW: load long-term memory + short chat summary
-  const uid = window.__auth.user.uid;
-  const [memory, chatSummary] = await Promise.all([
-    loadUserMemory(uid),                 // { name, speakLanguage, answerLanguage, ... }
-    loadChatSummary(uid, currentChatId)  // short synopsis of this chat
-  ]);
-
-  // existing
-  fd.append('audio', lastBlob, 'speech.webm');
-  fd.append('speakLanguage',  speakLangSel.value);
-  fd.append('answerLanguage', answerLangSel.value);
-  fd.append('conversationId', currentChatId);
-  fd.append('history', JSON.stringify(getHistoryForCurrentChat(6)));
-  fd.append('uid', uid);
-
-  // 🔹 NEW: include memory & summary in the request
-  fd.append('memory', JSON.stringify(memory || {}));
-  fd.append('chatSummary', JSON.stringify(chatSummary || ''));
-
-
-  try {
-    const headers = await getAuthHeader();
-    const res = await fetch(`${API_BASE}/api/ask`, {
-      method: 'POST',
-      headers: { ...headers, 'Accept': 'text/event-stream' }, // request SSE
-      body: fd
-    });
-
-    // Create a live assistant bubble to stream into
-    const bubble = createStreamingAssistantBubble();
-    let assistantFull = '';
-    let transcriptShown = false;
-
-    await readSSEStream(res, (evt) => {
-      switch (evt.type) {
-        case 'delta': {
-          const d = evt.delta || '';
-          assistantFull += d;
-          appendDelta(bubble, d);
-          statusEl.textContent = 'Thinking…';
-          break;
-        }
-        case 'message_end':
-          // text finished; TTS may still arrive
-          break;
-        case 'tts':
-          if (evt.audioBase64) {
-            player.src = 'data:audio/mpeg;base64,' + evt.audioBase64;
-            player.style.display = 'block';
-            player.play().catch(err => console.warn("Autoplay blocked:", err));
-          }
-          break;
-        case 'done': {
-  userTranscript = (evt.transcript || '(voice message)').trim();
-
-  // 1) Replace the pending user bubble with real transcript
-  userBubble.textContent = userTranscript;
-
-  // 2) Update hidden transcript/answer boxes
-  transcriptEl.textContent = userTranscript;
-  answerEl.textContent = assistantFull;
-
-  // 3) Save both user + assistant turns (user first, then assistant)
-  appendTurnToChat(userTranscript, assistantFull);
-
-  // 4) Final UI cleanup
-  loadingBar.style.display = 'none';
-  updateSuggestions(evt.suggestions || []);
-  statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-  lastBlob = null;
-  recordBtn.textContent = "🎙️";
-  recordBtn.classList.remove('recording');
-  sendBtn.disabled = true;
-  pauseBtn.style.display = 'none'; pauseBtn.disabled = true;
-  break;
-}
-
-        case 'error':
-          throw new Error(evt.message || 'Stream error');
+      // --- streaming UI helpers ---
+      function createStreamingAssistantBubble(){
+        const threadEl=document.getElementById('chatThread');
+        const div=document.createElement('div'); div.className='msg assistant'; div.__mdBuffer=''; div.innerHTML='';
+        threadEl.appendChild(div);
+        const observer=new MutationObserver(()=>{ threadEl.scrollTop=threadEl.scrollHeight; });
+        observer.observe(div,{childList:true,characterData:true,subtree:true});
+        return { el:div, observer };
       }
-    });
+      function appendDelta(bubble, delta){
+        bubble.el.__mdBuffer += (delta||'');
+        if (bubble.__raf) cancelAnimationFrame(bubble.__raf);
+        bubble.__raf = requestAnimationFrame(()=>{ bubble.el.innerHTML = renderMD(bubble.el.__mdBuffer); });
+      }
 
-  } catch (e) {
-    console.error(e);
-    loadingBar.style.display = 'none';
-    statusEl.textContent = "Network error. Try again.";
-  }
-}
-                // 🔹 NEW: heuristics to improve memory
-          const patch = {};
-          if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage = speakLangSel.value;
-          if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage = answerLangSel.value;
+      async function sendAudio(){
+        if (!window.__auth?.user){ statusEl.textContent="Please sign in first."; return; }
+        if (!lastBlob){ statusEl.textContent="Please record something first."; return; }
+        if (!validateLangs()){ statusEl.textContent="Please select both languages."; return; }
 
-          // Try to catch "my name is ___"
-          const m = userTranscript.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i);
-          if (m) patch.name = m[1].trim();
+        player.style.display='none'; loadingBar.style.display='block'; statusEl.textContent="";
 
-          if (Object.keys(patch).length) {
-            saveUserMemory(uid, patch);
-          }
+        const threadEl=document.getElementById('chatThread');
+        const userBubble=document.createElement('div'); userBubble.className='msg user';
+        userBubble.textContent='🎤 (processing transcript…)'; threadEl.appendChild(userBubble);
+        threadEl.scrollTop=threadEl.scrollHeight;
 
-          // 🔹 NEW: keep/update a short rolling summary for this chat
-          const chat = getChat(currentChatId);
-          if (chat && chat.messages?.length) {
-            const lastK = chat.messages.slice(-8)  // last ~4 turns (user+assistant)
-              .map(m => `${m.role}: ${m.content}`).join('\n');
-            const naiveSummary = (lastK.length > 480 ? lastK.slice(0, 480) + '…' : lastK);
-            saveChatSummary(uid, currentChatId, naiveSummary);
-          }
+        const fd=new FormData();
+        const uid=window.__auth.user.uid;
+        const [memory, chatSummary] = await Promise.all([ loadUserMemory(uid), loadChatSummary(uid, currentChatId) ]);
 
+        fd.append('audio', lastBlob, 'speech.webm');
+        fd.append('speakLanguage', speakLangSel.value);
+        fd.append('answerLanguage', answerLangSel.value);
+        fd.append('conversationId', currentChatId);
+        fd.append('history', JSON.stringify(getHistoryForCurrentChat(6)));
+        fd.append('uid', uid);
+        fd.append('memory', JSON.stringify(memory||{}));
+        fd.append('chatSummary', JSON.stringify(chatSummary||''));
 
+        try{
+          const headers = await getAuthHeader();
+          const res = await fetch(`${API_BASE}/api/ask`, { method:'POST', headers:{ ...headers, 'Accept':'text/event-stream' }, body: fd });
+
+          const bubble = createStreamingAssistantBubble();
+          let assistantFull=''; let userTranscript='';
+
+          await readSSEStream(res, (evt)=>{
+            switch(evt.type){
+              case 'delta': {
+                const d=evt.delta||''; assistantFull+=d; appendDelta(bubble,d); statusEl.textContent='Thinking…'; break;
+              }
+              case 'tts':
+                if (evt.audioBase64){ player.src='data:audio/mpeg;base64,'+evt.audioBase64; player.style.display='block'; player.play().catch(()=>{}); }
+                break;
+              case 'done': {
+                userTranscript=(evt.transcript || '(voice message)').trim();
+                userBubble.textContent=userTranscript;
+                transcriptEl.textContent=userTranscript; answerEl.textContent=assistantFull;
+                appendTurnToChat(userTranscript, assistantFull);
+
+                // memory patch (inside function)
+                const patch={};
+                if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage=speakLangSel.value;
+                if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage=answerLangSel.value;
+                const m=userTranscript.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i); if (m) patch.name=m[1].trim();
+                if (Object.keys(patch).length) saveUserMemory(uid, patch);
+
+                // rolling chat summary
+                const chat=getChat(currentChatId);
+                if (chat && chat.messages?.length){
+                  const lastK=chat.messages.slice(-8).map(m=>`${m.role}: ${m.content}`).join('\n');
+                  const naiveSummary=(lastK.length>480? lastK.slice(0,480)+'…':lastK);
+                  saveChatSummary(uid,currentChatId,naiveSummary);
+                }
+
+                loadingBar.style.display='none';
+                updateSuggestions(evt.suggestions || []);
+                statusEl.textContent='Done! Ask a follow-up or switch chats.';
+                lastBlob=null; recordBtn.textContent="🎙️"; recordBtn.classList.remove('recording');
+                sendBtn.disabled=true; pauseBtn.style.display='none'; pauseBtn.disabled=true;
+                break;
+              }
+              case 'error': throw new Error(evt.message || 'Stream error');
+            }
+          });
+        }catch(e){
+          console.error(e); loadingBar.style.display='none'; statusEl.textContent="Network error. Try again.";
+        }
+      }
       sendBtn.addEventListener('click', sendAudio);
 
-    
-// --- Make a live “assistant” bubble and auto-scroll as it grows ---
-function createStreamingAssistantBubble() {
-  const threadEl = document.getElementById('chatThread');
-  const div = document.createElement('div');
-  div.className = 'msg assistant';
-  // we'll keep a buffer and render markdown as it grows
-  div.__mdBuffer = '';
-  div.innerHTML = '';
-  threadEl.appendChild(div);
-  // auto-scroll while content grows
-  const observer = new MutationObserver(() => {
-    threadEl.scrollTop = threadEl.scrollHeight;
-  });
-  observer.observe(div, { childList: true, characterData: true, subtree: true });
-  return { el: div, observer };
-}
+      async function sendText(){
+        if (!window.__auth?.user){ statusEl.textContent="Please sign in first."; return; }
+        const textVal=textInput.value.trim(); if (!textVal){ statusEl.textContent="Please type something first."; return; }
+        if (!validateLangs()){ statusEl.textContent="Please select both languages."; return; }
 
-function appendDelta(bubble, delta) {
-  bubble.el.__mdBuffer += (delta || '');
-  // Throttle a bit to avoid re-rendering every single token
-  if (bubble.__raf) cancelAnimationFrame(bubble.__raf);
-  bubble.__raf = requestAnimationFrame(() => {
-    bubble.el.innerHTML = renderMD(bubble.el.__mdBuffer);
-  });
-}
+        textInput.value=""; player.style.display='none'; loadingBar.style.display='block'; statusEl.textContent="";
+        appendTurnToChat(textVal, null);
+        const bubble=createStreamingAssistantBubble();
 
+        const uid=window.__auth.user.uid;
+        const [memory, chatSummary] = await Promise.all([ loadUserMemory(uid), loadChatSummary(uid, currentChatId) ]);
 
-// --- Generic SSE reader that supports JSON events and raw-token streams ---
-// --- Generic SSE reader that supports JSON events and raw-token streams ---
-async function readSSEStream(res, onEvent) {
-  if (!res || !res.body) throw new Error('No response body to read');
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buf = '';
+        const body={
+          text: textVal,
+          speakLanguage: speakLangSel.value,
+          answerLanguage: answerLangSel.value,
+          conversationId: currentChatId,
+          history: getHistoryForCurrentChat(6),
+          uid,
+          memory, chatSummary
+        };
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
+        try{
+          const headers = Object.assign({ 'Content-Type':'application/json', 'Accept':'text/event-stream' }, await getAuthHeader());
+          const res = await fetch(`${API_BASE}/api/ask`, { method:'POST', headers, body: JSON.stringify(body) });
+          if (!res.ok){ loadingBar.style.display='none'; let msg='Request failed'; try{ msg=(await res.json())?.message||msg; }catch{} statusEl.textContent=msg; return; }
 
-    // Split by double newline per SSE framing
-    const frames = buf.split('\n\n');
-    buf = frames.pop() || '';
+          let assistantFull='';
+          await readSSEStream(res, (evt)=>{
+            switch(evt.type){
+              case 'delta': {
+                const d=evt.delta||''; assistantFull+=d; appendDelta(bubble,d); statusEl.textContent='Thinking…'; break;
+              }
+              case 'tts':
+                if (evt.audioBase64){ player.src='data:audio/mpeg;base64,'+evt.audioBase64; player.style.display='block'; }
+                break;
+              case 'done': {
+                appendTurnToChat(null, assistantFull);
+                transcriptEl.textContent=textVal; answerEl.textContent=assistantFull; loadingBar.style.display='none';
+                updateSuggestions(evt.suggestions || []); statusEl.textContent='Done! Ask a follow-up or switch chats.'; textInput.value=''; validateLangs();
 
-    for (const frame of frames) {
-      // Expect lines beginning with "data: "
-      const lines = frame.split('\n')
-        .map(l => l.replace(/^data:\s?/, ''))
-        .filter(Boolean);
+                // memory patch (inside function)
+                const patch={};
+                if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage=speakLangSel.value;
+                if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage=answerLangSel.value;
+                const m=textVal.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i); if (m) patch.name=m[1].trim();
+                if (Object.keys(patch).length) saveUserMemory(uid, patch);
 
-      for (const line of lines) {
-        // Try JSON first (our server sends {type,...})
-        let evt = null;
-        try { evt = JSON.parse(line); } catch { /* not JSON */ }
-        if (evt) { onEvent(evt); continue; }
-
-        // Fallback: treat as raw token stream
-        onEvent({ type: 'delta', delta: line });
-      }
-    }
-  }
-}
-
-      // ---------- Typed text send ----------
-      // 
-
-async function sendText() {
-  if (!window.__auth?.user) { statusEl.textContent = "Please sign in first."; return; }
-  const textVal = textInput.value.trim();
-  if (!textVal) { statusEl.textContent = "Please type something first."; return; }
-  if (!validateLangs()) { statusEl.textContent = "Please select both languages."; return; }
-
-  // UI prep
-  textInput.value = "";
-  player.style.display = 'none';
-  loadingBar.style.display = 'block';
-  statusEl.textContent = "";
-
-  // Immediately show the user's bubble in the thread
-  appendTurnToChat(textVal, null);
-
-  // Create a live assistant bubble to stream into
-  const bubble = createStreamingAssistantBubble();
-    // Fetch per-user memory and per-chat summary
-  const uid = window.__auth.user.uid;
-  const [memory, chatSummary] = await Promise.all([
-    loadUserMemory(uid),
-    loadChatSummary(uid, currentChatId)
-  ]);
-
-
-  const body = {
-    text: textVal,
-    speakLanguage: speakLangSel.value,
-    answerLanguage: answerLangSel.value,
-    conversationId: currentChatId,
-    history: getHistoryForCurrentChat(6),
-    uid: window.__auth.user.uid,
-    memory,              // long-term user profile
-    chatSummary 
-  };
-
-  try {
-    const headers = Object.assign(
-      { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' }, // tells server to stream
-      await getAuthHeader()
-    );
-
-    const res = await fetch(`${API_BASE}/api/ask`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body)
-    });
-
-    if (!res.ok) {
-      loadingBar.style.display = 'none';
-      let msg = 'Request failed';
-      try { msg = (await res.json())?.message || msg; } catch {}
-      statusEl.textContent = msg;
-      return;
-    }
-
-    let assistantFull = '';
-
-    await readSSEStream(res, (evt) => {
-      switch (evt.type) {
-        case 'delta': {
-          const d = evt.delta || '';
-          assistantFull += d;
-          appendDelta(bubble, d);
-          statusEl.textContent = 'Thinking…';
-          break;
+                const chat=getChat(currentChatId);
+                if (chat && chat.messages?.length){
+                  const lastK=chat.messages.slice(-8).map(m=>`${m.role}: ${m.content}`).join('\n');
+                  const naiveSummary=(lastK.length>480? lastK.slice(0,480)+'…':lastK);
+                  saveChatSummary(uid,currentChatId,naiveSummary);
+                }
+                break;
+              }
+              case 'error': throw new Error(evt.message || 'Stream error');
+            }
+          });
+        }catch(e){
+          console.error(e); loadingBar.style.display='none'; statusEl.textContent="Network error. Try again.";
         }
-        case 'message_end':
-          // text finished (server may still send TTS next)
-          break;
-        case 'tts':
-          if (evt.audioBase64) {
-            player.src = 'data:audio/mpeg;base64,' + evt.audioBase64;
-            player.style.display = 'block';
-          }
-          break;
-        case 'warn':
-          console.warn('[server warn]', evt.message);
-          break;
-        case 'done': {
-          // finalize: save the assistant turn to storage/Firestore and update UI
-          appendTurnToChat(null, assistantFull);
-          transcriptEl.textContent = textVal;
-          answerEl.textContent     = assistantFull;
-          loadingBar.style.display = 'none';
-          updateSuggestions(evt.suggestions || []);
-          statusEl.textContent = 'Done! Ask a follow-up or switch chats.';
-          textInput.value = '';
-          validateLangs();
-          break;
-        }
-        case 'error':
-          throw new Error(evt.message || 'Stream error');
-        default:
-          // unknown event; ignore
-          break;
       }
-    });
-
-  } catch (e) {
-    console.error(e);
-    loadingBar.style.display = 'none';
-    statusEl.textContent = "Network error. Try again.";
-  }
-}
-       const patch = {};
-          if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage = speakLangSel.value;
-          if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage = answerLangSel.value;
-          const m = textVal.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i);
-          if (m) patch.name = m[1].trim();
-          if (Object.keys(patch).length) saveUserMemory(uid, patch);
-
-          // Keep a short rolling summary for this chat (client-side naive version)
-          const chat = getChat(currentChatId);
-          if (chat && chat.messages?.length) {
-            const lastK = chat.messages.slice(-8).map(m => `${m.role}: ${m.content}`).join('\n');
-            const naiveSummary = (lastK.length > 480 ? lastK.slice(0, 480) + '…' : lastK);
-            saveChatSummary(uid, currentChatId, naiveSummary);
-          }
-
-
       sendTextBtn.addEventListener('click', sendText);
-      textInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendText();
-        }
-      });
-      // Render the message thread for current chat
-      function renderThread() {
-        const threadEl = document.getElementById('chatThread');
-        threadEl.innerHTML = '';
-        const chat = getChat(currentChatId);
-        if (!chat || !chat.messages || !chat.messages.length) {
-          return;
-        }
-        chat.messages.forEach(msg => {
-  const div = document.createElement('div');
-  const isAssistant = msg.role !== 'user';
-  div.className = 'msg ' + (isAssistant ? 'assistant' : 'user');
+      textInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
 
-  if (isAssistant) {
-    // assistant: render Markdown
-    div.innerHTML = renderMD(msg.content || "");
-  } else {
-    // user: keep plain text (or use renderMD if you also want formatting)
-    div.textContent = msg.content || "";
-  }
-  threadEl.appendChild(div);
-});
-
-        // Scroll to bottom
-        setTimeout(() => { threadEl.scrollTop = threadEl.scrollHeight; }, 0);
+      function renderThread(){
+        const threadEl=document.getElementById('chatThread'); threadEl.innerHTML='';
+        const chat=getChat(currentChatId);
+        if (!chat || !chat.messages || !chat.messages.length) return;
+        chat.messages.forEach(msg=>{
+          const div=document.createElement('div');
+          const isAssistant = msg.role!=='user';
+          div.className='msg '+(isAssistant?'assistant':'user');
+          if (isAssistant) div.innerHTML = renderMD(msg.content || "");
+          else div.textContent = msg.content || "";
+          threadEl.appendChild(div);
+        });
+        setTimeout(()=>{ threadEl.scrollTop=threadEl.scrollHeight; },0);
       }
-      // Update suggestions with static example prompts
-      // Update suggestions with server-provided prompts (fallback to defaults)
-function updateSuggestions(suggestions = []) {
-  const suggestionsEl = document.getElementById('suggestions');
-  const prompts = (Array.isArray(suggestions) && suggestions.length)
-    ? suggestions
-    : [
-        'Can you give me another example?',
-        'Could you explain this in simpler words?',
-        'What else should I know about this topic?'
-      ];
 
-  suggestionsEl.innerHTML = '';
-  prompts.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'suggestion-btn';
-    btn.textContent = p;
-    btn.addEventListener('click', () => {
-      textInput.value = p;
-      sendText();
-    });
-    suggestionsEl.appendChild(btn);
-  });
-  suggestionsEl.style.display = 'flex';
-}
+      function updateSuggestions(suggestions=[]){
+        const suggestionsEl=document.getElementById('suggestions');
+        const prompts=(Array.isArray(suggestions)&&suggestions.length)? suggestions : [
+          'Can you give me another example?',
+          'Could you explain this in simpler words?',
+          'What else should I know about this topic?'
+        ];
+        suggestionsEl.innerHTML='';
+        prompts.forEach(p=>{
+          const btn=document.createElement('button');
+          btn.className='suggestion-btn'; btn.textContent=p;
+          btn.addEventListener('click',()=>{ textInput.value=p; sendText(); });
+          suggestionsEl.appendChild(btn);
+        });
+        suggestionsEl.style.display='flex';
+      }
 
-      // Toggle sidebar on mobile
-      const toggleBtn = document.getElementById('toggleSidebarBtn');
-      const sidebar  = document.getElementById('sidebar');
-      toggleBtn.addEventListener('click', () => {
-        const open = sidebar.classList.contains('open');
-        if (open) {
-          sidebar.classList.remove('open');
-          document.body.style.overflow = '';
-        } else {
-          sidebar.classList.add('open');
-          document.body.style.overflow = 'hidden';
-        }
+      const toggleBtn=document.getElementById('toggleSidebarBtn');
+      const sidebar=document.getElementById('sidebar');
+      toggleBtn.addEventListener('click', ()=>{
+        const open=sidebar.classList.contains('open');
+        if (open){ sidebar.classList.remove('open'); document.body.style.overflow=''; }
+        else { sidebar.classList.add('open'); document.body.style.overflow='hidden'; }
       });
-      // On boot load first chat (if exists) after auth loaded
-      window.addEventListener('load', () => {
-        loadLangPrefs();
-        const all = loadAllChats();
-        if (all.length > 0) loadChat(all[0].id);
-        validateLangs();
-        renderThread();
-        updateLangLabel();
-        // Synchronise the mobile language selects with the initial desktop values
-        const mSpeak = document.getElementById('mobileSpeakLang');
-        const mAns   = document.getElementById('mobileAnswerLang');
-        if (mSpeak) mSpeak.value = speakLangSel.value;
-        if (mAns)   mAns.value   = answerLangSel.value;
-        const mobileLabel = document.getElementById('mobileLangLabel');
-        if (mobileLabel) mobileLabel.textContent = (speakLangSel.value || 'Speaking') + ' → ' + (answerLangSel.value || 'Answer');
+
+      window.addEventListener('load', ()=>{
+        loadLangPrefs?.();
+        const all=loadAllChats(); if (all.length>0) loadChat(all[0].id);
+        validateLangs(); renderThread(); updateLangLabel?.();
+        const mSpeak=document.getElementById('mobileSpeakLang');
+        const mAns=document.getElementById('mobileAnswerLang');
+        if (mSpeak) mSpeak.value=speakLangSel.value;
+        if (mAns)   mAns.value=answerLangSel.value;
+        const mobileLabel=document.getElementById('mobileLangLabel');
+        if (mobileLabel) mobileLabel.textContent=(speakLangSel.value||'Speaking')+' → '+(answerLangSel.value||'Answer');
       });
     </script>
-   
-
   </body>
 </html>
+
+
