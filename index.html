@@ -197,7 +197,9 @@
             <div class="email" id="profileEmail"></div>
           </div>
           <button id="settingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);">⚙️</button>
+          <button id="memoryBtn" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);" title="Edit memory">🧠</button>
         </div>
+
       </aside>
 
       <main>
@@ -711,6 +713,63 @@ async function saveChatSummary(uid, chatId, summary) {
   }
 }
 
+// ---- Memory extraction from free text ----
+function deriveMemoryPatchFromText(text) {
+  const patch = {};
+  if (!text) return patch;
+
+  // Name
+  let m = text.match(/\b(?:my\s+name\s+is|i\s*am|i'm)\s+([A-Za-z][A-Za-z\s.'-]{1,40})\b/i);
+  if (m) patch.name = m[1].trim();
+
+  // Age
+  m = text.match(/\bI\s*am\s*(\d{1,2})\s*(?:years?\s*old|yo)\b/i);
+  if (m) patch.age = Number(m[1]);
+
+  // City
+  m = text.match(/\bI\s*live\s*in\s*([A-Za-z][A-Za-z\s.'-]{1,40})\b/i);
+  if (m) patch.city = m[1].trim();
+  m = text.match(/\b(?:from|based\s*in)\s*([A-Za-z][A-Za-z\s.'-]{1,40})\b/i);
+  if (m && !patch.city) patch.city = m[1].trim();
+
+  // Languages
+  const langs = [];
+  const langRegex = /\b(?:I\s*(?:speak|know|am\s*learning)\s*)(English|Hindi|Tamil|Telugu|Kannada|Malayalam|Marathi|Gujarati|Bengali|Punjabi|Panjabi)\b/ig;
+  let lm; while ((lm = langRegex.exec(text)) !== null) langs.push(lm[1]);
+  if (langs.length) patch.languages = Array.from(new Set([...(patch.languages||[]), ...langs]));
+
+  // Interests
+  const interestRegex = /\bI\s*like\s*(?:to\s*)?([A-Za-z][A-Za-z\s,'-]{1,50})\b/i;
+  m = text.match(interestRegex);
+  if (m) {
+    const interests = (patch.interests || []);
+    m[1].split(/,|and/).map(s=>s.trim()).filter(Boolean).forEach(v=>{
+      if (!interests.includes(v)) interests.push(v);
+    });
+    patch.interests = interests;
+  }
+
+  // Goal
+  m = text.match(/\bmy\s*(?:goal|dream|plan)\s*(?:is|:)\s*([A-Za-z][A-Za-z\s,'-]{3,120})/i);
+  if (m) patch.goal = m[1].trim();
+
+  return patch;
+}
+
+// ---- Pretty summary for /me ----
+function formatMemorySummary(mem = {}) {
+  const parts = [];
+  if (mem.name) parts.push(`**Name:** ${mem.name}`);
+  if (mem.age) parts.push(`**Age:** ${mem.age}`);
+  if (mem.city) parts.push(`**City:** ${mem.city}`);
+  if (Array.isArray(mem.languages) && mem.languages.length) parts.push(`**Languages:** ${mem.languages.join(', ')}`);
+  if (mem.speakLanguage || mem.answerLanguage) {
+    parts.push(`**App Languages:** Speak = ${mem.speakLanguage||'-'}, Answer = ${mem.answerLanguage||'-'}`);
+  }
+  if (Array.isArray(mem.interests) && mem.interests.length) parts.push(`**Interests:** ${mem.interests.join(', ')}`);
+  if (mem.goal) parts.push(`**Goal:** ${mem.goal}`);
+  return parts.length ? parts.join('\n') : "_I don't have anything stored yet. Tell me about you!_";
+}
 
       // ---------- UI: render chat list ----------
       let currentChatId = null;
@@ -905,6 +964,19 @@ async function saveChatSummary(uid, chatId, summary) {
         fd.append('uid', uid);
         fd.append('memory', JSON.stringify(memory||{}));
         fd.append('chatSummary', JSON.stringify(chatSummary||''));
+        // Local command: /me or "about me"
+if (/^\/me\b/i.test(textVal) || /\babout\s+me\b/i.test(textVal)) {
+  const uid = window.__auth?.user?.uid;
+  if (!uid) { statusEl.textContent = "Please sign in first."; return; }
+  const mem = await loadUserMemory(uid);
+  appendTurnToChat(textVal, formatMemorySummary(mem));
+  transcriptEl.textContent = textVal;
+  answerEl.textContent = formatMemorySummary(mem);
+  loadingBar.style.display='none';
+  statusEl.textContent = 'Loaded your profile from memory.';
+  textInput.value=''; validateLangs();
+  return; // skip network call
+}
 
         try{
           const headers = await getAuthHeader();
@@ -928,11 +1000,15 @@ async function saveChatSummary(uid, chatId, summary) {
                 appendTurnToChat(userTranscript, assistantFull);
 
                 // memory patch (inside function)
-                const patch={};
-                if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage=speakLangSel.value;
-                if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage=answerLangSel.value;
-                const m=userTranscript.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i); if (m) patch.name=m[1].trim();
-                if (Object.keys(patch).length) saveUserMemory(uid, patch);
+                // ---- Memory patch (enhanced) ----
+const basePatch = {};
+if (!memory?.speakLanguage && speakLangSel.value) basePatch.speakLanguage = speakLangSel.value;
+if (!memory?.answerLanguage && answerLangSel.value) basePatch.answerLanguage = answerLangSel.value;
+
+const newFacts = deriveMemoryPatchFromText(userTranscript || '');
+const finalPatch = { ...basePatch, ...newFacts };
+
+if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
 
                 // rolling chat summary
                 const chat=getChat(currentChatId);
@@ -1000,11 +1076,16 @@ async function saveChatSummary(uid, chatId, summary) {
                 updateSuggestions(evt.suggestions || []); statusEl.textContent='Done! Ask a follow-up or switch chats.'; textInput.value=''; validateLangs();
 
                 // memory patch (inside function)
-                const patch={};
-                if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage=speakLangSel.value;
-                if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage=answerLangSel.value;
-                const m=textVal.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i); if (m) patch.name=m[1].trim();
-                if (Object.keys(patch).length) saveUserMemory(uid, patch);
+                // ---- Memory patch (enhanced) ----
+const basePatch = {};
+if (!memory?.speakLanguage && speakLangSel.value) basePatch.speakLanguage = speakLangSel.value;
+if (!memory?.answerLanguage && answerLangSel.value) basePatch.answerLanguage = answerLangSel.value;
+
+const newFacts = deriveMemoryPatchFromText(textVal || '');
+const finalPatch = { ...basePatch, ...newFacts };
+
+if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
+
 
                 const chat=getChat(currentChatId);
                 if (chat && chat.messages?.length){
@@ -1023,6 +1104,24 @@ async function saveChatSummary(uid, chatId, summary) {
       }
       sendTextBtn.addEventListener('click', sendText);
       textInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
+
+      <div id="memoryModal" style="display:none; position:fixed; inset:0; background:#0005; z-index:99999; align-items:center; justify-content:center;">
+  <div style="width:min(520px,92vw); background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+    <h3 style="margin:0 0 8px;">Your Memory</h3>
+    <div style="display:grid; gap:8px;">
+      <label>Name <input id="memName" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Age <input id="memAge" type="number" min="1" max="120" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>City <input id="memCity" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Languages (comma-separated) <input id="memLangs" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Interests (comma-separated) <input id="memInterests" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Goal <input id="memGoal" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+    </div>
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+      <button id="memCancel" class="btn-auth">Cancel</button>
+      <button id="memSave" class="btn-auth btn-email">Save</button>
+    </div>
+  </div>
+</div>
 
       function renderThread(){
         const threadEl=document.getElementById('chatThread'); threadEl.innerHTML='';
@@ -1063,6 +1162,46 @@ async function saveChatSummary(uid, chatId, summary) {
         if (open){ sidebar.classList.remove('open'); document.body.style.overflow=''; }
         else { sidebar.classList.add('open'); document.body.style.overflow='hidden'; }
       });
+
+      // Memory editor wiring
+const memoryBtn = document.getElementById('memoryBtn');
+const memoryModal = document.getElementById('memoryModal');
+const memName = document.getElementById('memName');
+const memAge = document.getElementById('memAge');
+const memCity = document.getElementById('memCity');
+const memLangs = document.getElementById('memLangs');
+const memInterests = document.getElementById('memInterests');
+const memGoal = document.getElementById('memGoal');
+
+document.getElementById('memCancel').onclick = ()=> memoryModal.style.display='none';
+document.getElementById('memSave').onclick = async ()=>{
+  const uid = window.__auth?.user?.uid;
+  if (!uid) { alert('Please sign in first'); return; }
+  const patch = {
+    name: memName.value.trim() || undefined,
+    age: memAge.value ? Number(memAge.value) : undefined,
+    city: memCity.value.trim() || undefined,
+    languages: memLangs.value ? memLangs.value.split(',').map(s=>s.trim()).filter(Boolean) : undefined,
+    interests: memInterests.value ? memInterests.value.split(',').map(s=>s.trim()).filter(Boolean) : undefined,
+    goal: memGoal.value.trim() || undefined,
+  };
+  await saveUserMemory(uid, patch);
+  memoryModal.style.display='none';
+  statusEl.textContent = 'Memory saved.';
+};
+
+memoryBtn.onclick = async ()=>{
+  const uid = window.__auth?.user?.uid;
+  if (!uid) { alert('Please sign in first'); return; }
+  const mem = await loadUserMemory(uid);
+  memName.value = mem.name || '';
+  memAge.value = mem.age || '';
+  memCity.value = mem.city || '';
+  memLangs.value = Array.isArray(mem.languages) ? mem.languages.join(', ') : (mem.speakLanguage ? [mem.speakLanguage, mem.answerLanguage].filter(Boolean).join(', ') : '');
+  memInterests.value = Array.isArray(mem.interests) ? mem.interests.join(', ') : '';
+  memGoal.value = mem.goal || '';
+  memoryModal.style.display = 'flex';
+};
 
       window.addEventListener('load', ()=>{
         loadLangPrefs?.();
