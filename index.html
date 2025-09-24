@@ -677,26 +677,40 @@
       }
 
       // User memory helpers
-      async function loadUserMemory(uid){
-        const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-        const ref = doc(db,'users',uid,'meta','memory'); const snap = await getDoc(ref);
-        return snap.exists() ? snap.data() : {};
-      }
-      async function saveUserMemory(uid, patch){
-        const { db, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-        const ref = doc(db,'users',uid,'meta','memory'); await setDoc(ref, patch, { merge:true });
-      }
-      async function loadChatSummary(uid, chatId){
-        const { db, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-        const ref = doc(db,'users',uid,'chats',chatId); const snap = await getDoc(ref);
-        return snap.exists() ? (snap.data().summary || '') : '';
-      }
-      async function saveChatSummary(uid, chatId, summary){
-        const { db, doc, updateDoc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-        const ref = doc(db,'users',uid,'chats',chatId);
-        try { await updateDoc(ref,{ summary, updatedAt:serverTimestamp() }); }
-        catch { await setDoc(ref,{ summary, updatedAt:serverTimestamp() },{ merge:true }); }
-      }
+      // load user memory
+async function loadUserMemory(uid) {
+  const { db, doc, getDoc } = window.__db;   // use the initialized db + helpers
+  const ref = doc(db, 'users', uid, 'meta', 'memory');
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : {};
+}
+
+// save user memory
+async function saveUserMemory(uid, patch) {
+  const { db, doc, setDoc } = window.__db;
+  const ref = doc(db, 'users', uid, 'meta', 'memory');
+  await setDoc(ref, patch, { merge: true });
+}
+
+// load chat summary
+async function loadChatSummary(uid, chatId) {
+  const { db, doc, getDoc } = window.__db;
+  const ref = doc(db, 'users', uid, 'chats', chatId);
+  const snap = await getDoc(ref);
+  return snap.exists() ? (snap.data().summary || '') : '';
+}
+
+// save chat summary
+async function saveChatSummary(uid, chatId, summary) {
+  const { db, doc, updateDoc, setDoc, serverTimestamp } = window.__db;
+  const ref = doc(db, 'users', uid, 'chats', chatId);
+  try {
+    await updateDoc(ref, { summary, updatedAt: serverTimestamp() });
+  } catch {
+    await setDoc(ref, { summary, updatedAt: serverTimestamp() }, { merge: true });
+  }
+}
+
 
       // ---------- UI: render chat list ----------
       let currentChatId = null;
