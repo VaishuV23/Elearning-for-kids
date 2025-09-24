@@ -66,8 +66,8 @@
       .msg.user{align-self:flex-end;background:linear-gradient(135deg,#dbeafe,#c7d2fe);border-top-right-radius:0}
       .msg.assistant{align-self:flex-start;background:linear-gradient(135deg,#fef3c7,#fde68a);border-top-left-radius:0}
       .msg.assistant :is(p,ul,ol,pre,code,blockquote,h1,h2,h3){margin:.25rem 0}
-      .msg.assistant pre{padding:.6rem;border-radius:8px;overflow:auto;background:#1111/4}
-      .msg.assistant code{padding:.1rem .3rem;border-radius:6px;background:#1111/4}
+      .msg.assistant pre{ background: rgba(17,17,17,.04); }
+.msg.assistant code{ background: rgba(17,17,17,.04); }
       .msg.assistant a{color:#0b62ff;text-decoration:none}
       .msg.assistant a:hover{text-decoration:underline}
       #suggestions{display:none;padding:.5rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem}
@@ -292,7 +292,7 @@
       import {
         getFirestore, doc, setDoc, updateDoc, collection, addDoc,
         serverTimestamp, query, orderBy, limit, getDocs, increment,
-        writeBatch, getDoc
+        writeBatch, getDoc, deleteDoc
       } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 
       const firebaseConfig = {
@@ -312,7 +312,7 @@
 
       // Expose for later scripts
       window.__auth = { auth, getIdToken, user: null };
-      window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc  };
+      window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc, deleteDoc  };
 
       // Refs
       const loginBtn       = document.getElementById('loginBtn');
@@ -964,20 +964,6 @@ function formatMemorySummary(mem = {}) {
         fd.append('uid', uid);
         fd.append('memory', JSON.stringify(memory||{}));
         fd.append('chatSummary', JSON.stringify(chatSummary||''));
-        // Local command: /me or "about me"
-if (/^\/me\b/i.test(textVal) || /\babout\s+me\b/i.test(textVal)) {
-  const uid = window.__auth?.user?.uid;
-  if (!uid) { statusEl.textContent = "Please sign in first."; return; }
-  const mem = await loadUserMemory(uid);
-  appendTurnToChat(textVal, formatMemorySummary(mem));
-  transcriptEl.textContent = textVal;
-  answerEl.textContent = formatMemorySummary(mem);
-  loadingBar.style.display='none';
-  statusEl.textContent = 'Loaded your profile from memory.';
-  textInput.value=''; validateLangs();
-  return; // skip network call
-}
-
         try{
           const headers = await getAuthHeader();
           const res = await fetch(`${API_BASE}/api/ask`, { method:'POST', headers:{ ...headers, 'Accept':'text/event-stream' }, body: fd });
@@ -1038,6 +1024,19 @@ if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
         if (!window.__auth?.user){ statusEl.textContent="Please sign in first."; return; }
         const textVal=textInput.value.trim(); if (!textVal){ statusEl.textContent="Please type something first."; return; }
         if (!validateLangs()){ statusEl.textContent="Please select both languages."; return; }
+        if (/^\/me\b/i.test(textVal) || /\babout\s+me\b/i.test(textVal)) {
+    const uid = window.__auth?.user?.uid;
+    if (!uid) { statusEl.textContent = "Please sign in first."; return; }
+    const mem = await loadUserMemory(uid);
+    const summary = formatMemorySummary(mem);
+    appendTurnToChat(textVal, summary);
+    transcriptEl.textContent = textVal;
+    answerEl.textContent = summary;
+    textInput.value='';
+    validateLangs();
+    statusEl.textContent = 'Loaded your profile from memory.';
+    return; // skip network call
+  }
 
         textInput.value=""; player.style.display='none'; loadingBar.style.display='block'; statusEl.textContent="";
         appendTurnToChat(textVal, null);
@@ -1105,23 +1104,6 @@ if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
       sendTextBtn.addEventListener('click', sendText);
       textInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
 
-      <div id="memoryModal" style="display:none; position:fixed; inset:0; background:#0005; z-index:99999; align-items:center; justify-content:center;">
-  <div style="width:min(520px,92vw); background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
-    <h3 style="margin:0 0 8px;">Your Memory</h3>
-    <div style="display:grid; gap:8px;">
-      <label>Name <input id="memName" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Age <input id="memAge" type="number" min="1" max="120" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>City <input id="memCity" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Languages (comma-separated) <input id="memLangs" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Interests (comma-separated) <input id="memInterests" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Goal <input id="memGoal" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-    </div>
-    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-      <button id="memCancel" class="btn-auth">Cancel</button>
-      <button id="memSave" class="btn-auth btn-email">Save</button>
-    </div>
-  </div>
-</div>
 
       function renderThread(){
         const threadEl=document.getElementById('chatThread'); threadEl.innerHTML='';
@@ -1215,6 +1197,23 @@ memoryBtn.onclick = async ()=>{
         if (mobileLabel) mobileLabel.textContent=(speakLangSel.value||'Speaking')+' → '+(answerLangSel.value||'Answer');
       });
     </script>
+    <div id="memoryModal" style="display:none; position:fixed; inset:0; background:#0005; z-index:99999; align-items:center; justify-content:center;">
+  <div style="width:min(520px,92vw); background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
+    <h3 style="margin:0 0 8px;">Your Memory</h3>
+    <div style="display:grid; gap:8px;">
+      <label>Name <input id="memName" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Age <input id="memAge" type="number" min="1" max="120" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>City <input id="memCity" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Languages (comma-separated) <input id="memLangs" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Interests (comma-separated) <input id="memInterests" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+      <label>Goal <input id="memGoal" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
+    </div>
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+      <button id="memCancel" class="btn-auth">Cancel</button>
+      <button id="memSave" class="btn-auth btn-email">Save</button>
+    </div>
+  </div>
+</div>
   </body>
 </html>
 
