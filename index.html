@@ -1058,39 +1058,30 @@ async function saveChatSummary(uid, chatId, summary) {
     const threadEl = document.getElementById('chatThread');
     const suggestionsEl = document.getElementById('suggestions');
     
-    // Clear previous chat suggestions when a new chat is loaded
-    suggestionsEl.innerHTML = '';
-    suggestionsEl.style.display = 'none';  // Hide suggestions
-
-    threadEl.innerHTML = ''; // Clear the chat thread before appending new messages
-
+    // Hide suggestions when the chat is new (i.e., no messages yet)
     const chat = getChat(currentChatId);
-    if (!chat || !chat.messages || !chat.messages.length) return;
+    if (!chat || !chat.messages || chat.messages.length === 0) {
+        suggestionsEl.style.display = 'none'; // Hide suggestions if it's a new chat
+        return;  // Exit early if it's a new chat with no messages
+    }
 
-    // Loop through each message in the chat and append it to the thread
+    // Render the chat thread
+    threadEl.innerHTML = '';
     chat.messages.forEach(msg => {
         const div = document.createElement('div');
-
-        // Check if the message is from the assistant or user and apply the correct class
-        const isAssistant = msg.role !== 'user';
-        div.className = 'msg ' + (isAssistant ? 'assistant' : 'user');
-
-        // Set the message content; if assistant, render with markdown
-        if (isAssistant) {
-            div.innerHTML = renderMD(msg.content || ''); // For assistant messages, use Markdown rendering
-        } else {
-            div.textContent = msg.content || ''; // For user messages, use plain text
-        }
-
-        // Append the message to the chat thread
+        div.className = 'msg ' + (msg.role === 'user' ? 'user' : 'assistant');
+        div.textContent = msg.content || '';
         threadEl.appendChild(div);
     });
 
-    // Scroll to the bottom of the chat thread after appending new messages
+    // Scroll to the bottom of the chat thread
     setTimeout(() => {
         threadEl.scrollTop = threadEl.scrollHeight;
     }, 0);
 }
+
+
+   
 
 
      function updateSuggestions(suggestions = []) {
