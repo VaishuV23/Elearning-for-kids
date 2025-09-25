@@ -281,8 +281,17 @@
       const safeValidate = () => (window.validateLangs ? window.validateLangs() : false);
 
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getIdToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+      import {
+        getAuth, GoogleAuthProvider, FacebookAuthProvider,
+        signInWithPopup, signOut, onAuthStateChanged, getIdToken,
+        createUserWithEmailAndPassword, signInWithEmailAndPassword,
+        RecaptchaVerifier, signInWithPhoneNumber
+      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
+      import {
+        getFirestore, doc, setDoc, updateDoc, collection, addDoc,
+        serverTimestamp, query, orderBy, limit, getDocs, increment,
+        writeBatch, getDoc
+      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 
       const firebaseConfig = {
         apiKey: "AIzaSyARKGvFd051nAxe3lXpkcktBHl46NP38A0",
@@ -409,7 +418,7 @@ import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimesta
           profileEmailEl.textContent = user.email || '';
           if (user.photoURL) {
             userAvatarEl.textContent = '';
-            userAvatarEl.style.backgroundImage = url(${user.photoURL});
+            userAvatarEl.style.backgroundImage = `url(${user.photoURL})`;
             userAvatarEl.style.backgroundSize = 'cover';
             userAvatarEl.style.backgroundPosition = 'center';
           } else {
@@ -712,14 +721,14 @@ async function saveChatSummary(uid, chatId, summary) {
           div.className="chatitem"+(chat.id===currentChatId?" active":"");
           const d=new Date(chat.createdAt);
           const when=d.toLocaleDateString()+" "+d.toLocaleTimeString();
-          div.innerHTML=
+          div.innerHTML=`
             <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
               <div>
                 <div style="font-weight:600">${chat.title}</div>
                 <div style="font-size:.85rem;color:#666">${when}</div>
               </div>
               <button class="chat-del" title="Delete this chat" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">🗑️</button>
-            </div>;
+            </div>`;
           div.onclick=()=>loadChat(chat.id);
           const delBtn=div.querySelector('.chat-del');
           delBtn.addEventListener('click',(e)=>{ e.stopPropagation(); deleteChat(chat.id); });
@@ -765,7 +774,7 @@ async function saveChatSummary(uid, chatId, summary) {
       textInput.addEventListener('input', validateLangs);
 
       async function getStream(){ try{ return await navigator.mediaDevices.getUserMedia({audio:true}); }catch{ alert("Microphone permission is required."); throw new Error("no-mic"); } }
-      function fmt(sec){const m=String(Math.floor(sec/60)).padStart(2,'0');const s=String(Math.floor(sec%60)).padStart(2,'0');return ${m}:${s};}
+      function fmt(sec){const m=String(Math.floor(sec/60)).padStart(2,'0');const s=String(Math.floor(sec%60)).padStart(2,'0');return `${m}:${s}`;}
       function startTimer(){timerBadge.style.display='inline-block';startTs=Date.now();tickInt=setInterval(()=>{timerBadge.textContent=fmt((Date.now()-startTs)/1000);},250);}
       function stopTimer(){clearInterval(tickInt);tickInt=null;timerBadge.style.display='none';}
 
@@ -840,7 +849,7 @@ async function saveChatSummary(uid, chatId, summary) {
       // --- Single JSON-aware SSE reader (keep one) ---
       async function readSSEStream(res, onEvent){
         if (!res || !res.body) throw new Error('No response body to read');
-        if (!res.ok) throw new Error(HTTP ${res.status});
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
         while(true){
           const { value, done } = await reader.read(); if (done) break;
@@ -899,7 +908,7 @@ async function saveChatSummary(uid, chatId, summary) {
 
         try{
           const headers = await getAuthHeader();
-          const res = await fetch(${API_BASE}/api/ask, { method:'POST', headers:{ ...headers, 'Accept':'text/event-stream' }, body: fd });
+          const res = await fetch(`${API_BASE}/api/ask`, { method:'POST', headers:{ ...headers, 'Accept':'text/event-stream' }, body: fd });
 
           const bubble = createStreamingAssistantBubble();
           let assistantFull=''; let userTranscript='';
@@ -928,7 +937,7 @@ async function saveChatSummary(uid, chatId, summary) {
                 // rolling chat summary
                 const chat=getChat(currentChatId);
                 if (chat && chat.messages?.length){
-                  const lastK=chat.messages.slice(-8).map(m=>${m.role}: ${m.content}).join('\n');
+                  const lastK=chat.messages.slice(-8).map(m=>`${m.role}: ${m.content}`).join('\n');
                   const naiveSummary=(lastK.length>480? lastK.slice(0,480)+'…':lastK);
                   saveChatSummary(uid,currentChatId,naiveSummary);
                 }
@@ -973,7 +982,7 @@ async function saveChatSummary(uid, chatId, summary) {
 
         try{
           const headers = Object.assign({ 'Content-Type':'application/json', 'Accept':'text/event-stream' }, await getAuthHeader());
-          const res = await fetch(${API_BASE}/api/ask, { method:'POST', headers, body: JSON.stringify(body) });
+          const res = await fetch(`${API_BASE}/api/ask`, { method:'POST', headers, body: JSON.stringify(body) });
           if (!res.ok){ loadingBar.style.display='none'; let msg='Request failed'; try{ msg=(await res.json())?.message||msg; }catch{} statusEl.textContent=msg; return; }
 
           let assistantFull='';
@@ -999,7 +1008,7 @@ async function saveChatSummary(uid, chatId, summary) {
 
                 const chat=getChat(currentChatId);
                 if (chat && chat.messages?.length){
-                  const lastK=chat.messages.slice(-8).map(m=>${m.role}: ${m.content}).join('\n');
+                  const lastK=chat.messages.slice(-8).map(m=>`${m.role}: ${m.content}`).join('\n');
                   const naiveSummary=(lastK.length>480? lastK.slice(0,480)+'…':lastK);
                   saveChatSummary(uid,currentChatId,naiveSummary);
                 }
@@ -1069,3 +1078,4 @@ async function saveChatSummary(uid, chatId, summary) {
     </script>
   </body>
 </html>
+
