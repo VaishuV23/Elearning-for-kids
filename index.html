@@ -760,7 +760,8 @@ async function saveChatSummary(uid, chatId, summary) {
       newChatBtn.addEventListener('click', () => {
     const c = createChat();
     loadChat(c.id);
-    updateSuggestions([]);  // Clear suggestions for the new chat
+    updateSuggestions([]);  
+        suggestionsEl.style.display = 'none';// Clear suggestions for the new chat
 });
 
       document.getElementById('clearAllBtn').addEventListener('click', deleteAllChats);
@@ -1092,7 +1093,7 @@ async function saveChatSummary(uid, chatId, summary) {
 }
 
 
-      function updateSuggestions(suggestions = []) {
+     function updateSuggestions(suggestions = []) {
     const suggestionsEl = document.getElementById('suggestions');
     const prompts = (Array.isArray(suggestions) && suggestions.length) ? suggestions : [
         'Can you give me another example?',
@@ -1100,18 +1101,23 @@ async function saveChatSummary(uid, chatId, summary) {
         'What else should I know about this topic?'
     ];
 
-    suggestionsEl.innerHTML = '';
-    prompts.forEach(p => {
-        const btn = document.createElement('button');
-        btn.className = 'suggestion-btn';
-        btn.textContent = p;
-        btn.addEventListener('click', () => {
-            textInput.value = p;
-            sendText();
+    suggestionsEl.innerHTML = '';  // Clear any existing suggestions
+
+    if (prompts.length > 0) {
+        prompts.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'suggestion-btn';
+            btn.textContent = p;
+            btn.addEventListener('click', () => {
+                textInput.value = p;
+                sendText();
+            });
+            suggestionsEl.appendChild(btn);
         });
-        suggestionsEl.appendChild(btn);
-    });
-    suggestionsEl.style.display = 'flex';  // Show suggestions
+        suggestionsEl.style.display = 'flex';  // Show suggestions if there are any
+    } else {
+        suggestionsEl.style.display = 'none';  // Hide suggestions if empty
+    }
 }
 
       const toggleBtn=document.getElementById('toggleSidebarBtn');
