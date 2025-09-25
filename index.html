@@ -281,17 +281,8 @@
       const safeValidate = () => (window.validateLangs ? window.validateLangs() : false);
 
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-      import {
-        getAuth, GoogleAuthProvider, FacebookAuthProvider,
-        signInWithPopup, signOut, onAuthStateChanged, getIdToken,
-        createUserWithEmailAndPassword, signInWithEmailAndPassword,
-        RecaptchaVerifier, signInWithPhoneNumber
-      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-      import {
-        getFirestore, doc, setDoc, updateDoc, collection, addDoc,
-        serverTimestamp, query, orderBy, limit, getDocs, increment,
-        writeBatch, getDoc
-      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+import { getAuth, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getIdToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
+import { getFirestore, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 
       const firebaseConfig = {
         apiKey: "AIzaSyARKGvFd051nAxe3lXpkcktBHl46NP38A0",
