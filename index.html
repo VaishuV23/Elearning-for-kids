@@ -831,15 +831,39 @@ async function saveChatSummary(uid, chatId, summary) {
         const chat=getChat(currentChatId); if(!chat) return [];
         const msgs=chat.messages||[]; return msgs.slice(-limitTurns*2);
       }
-      function appendTurnToChat(userText, assistantText){
-        const chat=getChat(currentChatId); if(!chat) return;
-        if (userText) chat.messages.push({role:"user",content:userText});
-        if (assistantText) chat.messages.push({role:"assistant",content:assistantText});
-        setTitleIfEmpty(chat, userText); updateChat(chat); renderChatList();
-        const user=window.__auth?.user;
-        if (user) saveTurnToFirestore(user.uid, chat.id, userText, assistantText, speakLangSel.value, answerLangSel.value);
-        renderThread();
-      }
+      function appendTurnToChat(userText, assistantText) {
+    const chat = getChat(currentChatId); 
+    if (!chat) return;
+
+    // Ensure we are pushing the messages into chat history
+    if (userText) chat.messages.push({ role: "user", content: userText });
+    if (assistantText) chat.messages.push({ role: "assistant", content: assistantText });
+
+    // Update the title of the chat if empty
+    setTitleIfEmpty(chat, userText);
+
+    // Save chat updates to Firebase
+    const user = window.__auth?.user;
+    if (user) {
+        saveTurnToFirestore(
+            user.uid, 
+            chat.id, 
+            userText, 
+            assistantText, 
+            speakLangSel.value, 
+            answerLangSel.value
+        );
+    }
+
+    // Update local chat and render chat list
+    updateChat(chat); 
+    renderChatList();
+
+    // Render the updated chat thread with proper message formatting
+    renderThread();
+}
+
+
       async function getAuthHeader(){
         const user=window.__auth?.user; if(!user) return {};
         try{ const token=await window.__auth.getIdToken(user,false); return { 'Authorization':'Bearer '+token }; }
@@ -1024,20 +1048,37 @@ async function saveChatSummary(uid, chatId, summary) {
       sendTextBtn.addEventListener('click', sendText);
       textInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
 
-      function renderThread(){
-        const threadEl=document.getElementById('chatThread'); threadEl.innerHTML='';
-        const chat=getChat(currentChatId);
-        if (!chat || !chat.messages || !chat.messages.length) return;
-        chat.messages.forEach(msg=>{
-          const div=document.createElement('div');
-          const isAssistant = msg.role!=='user';
-          div.className='msg '+(isAssistant?'assistant':'user');
-          if (isAssistant) div.innerHTML = renderMD(msg.content || "");
-          else div.textContent = msg.content || "";
-          threadEl.appendChild(div);
-        });
-        setTimeout(()=>{ threadEl.scrollTop=threadEl.scrollHeight; },0);
-      }
+      function renderThread() {
+    const threadEl = document.getElementById('chatThread');
+    threadEl.innerHTML = ''; // Clear the chat thread before appending new messages
+
+    const chat = getChat(currentChatId);
+    if (!chat || !chat.messages || !chat.messages.length) return;
+
+    // Loop through each message in the chat and append it to the thread
+    chat.messages.forEach(msg => {
+        const div = document.createElement('div');
+
+        // Check if the message is from the assistant or user and apply the correct class
+        const isAssistant = msg.role !== 'user';
+        div.className = 'msg ' + (isAssistant ? 'assistant' : 'user');
+
+        // Set the message content; if assistant, render with markdown
+        if (isAssistant) {
+            div.innerHTML = renderMD(msg.content || ''); // For assistant messages, use Markdown rendering
+        } else {
+            div.textContent = msg.content || ''; // For user messages, use plain text
+        }
+
+        // Append the message to the chat thread
+        threadEl.appendChild(div);
+    });
+
+    // Scroll to the bottom of the chat thread after appending new messages
+    setTimeout(() => {
+        threadEl.scrollTop = threadEl.scrollHeight;
+    }, 0);
+}
 
       function updateSuggestions(suggestions=[]){
         const suggestionsEl=document.getElementById('suggestions');
