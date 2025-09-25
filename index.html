@@ -1,3 +1,4 @@
+You said:
 <!doctype html>
 <html>
   <head>
@@ -66,8 +67,8 @@
       .msg.user{align-self:flex-end;background:linear-gradient(135deg,#dbeafe,#c7d2fe);border-top-right-radius:0}
       .msg.assistant{align-self:flex-start;background:linear-gradient(135deg,#fef3c7,#fde68a);border-top-left-radius:0}
       .msg.assistant :is(p,ul,ol,pre,code,blockquote,h1,h2,h3){margin:.25rem 0}
-      .msg.assistant pre{ background: rgba(17,17,17,.04); }
-.msg.assistant code{ background: rgba(17,17,17,.04); }
+      .msg.assistant pre{padding:.6rem;border-radius:8px;overflow:auto;background:#1111/4}
+      .msg.assistant code{padding:.1rem .3rem;border-radius:6px;background:#1111/4}
       .msg.assistant a{color:#0b62ff;text-decoration:none}
       .msg.assistant a:hover{text-decoration:underline}
       #suggestions{display:none;padding:.5rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem}
@@ -197,9 +198,7 @@
             <div class="email" id="profileEmail"></div>
           </div>
           <button id="settingsBtn" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);">⚙️</button>
-          <button id="memoryBtn" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);" title="Edit memory">🧠</button>
         </div>
-
       </aside>
 
       <main>
@@ -292,7 +291,7 @@
       import {
         getFirestore, doc, setDoc, updateDoc, collection, addDoc,
         serverTimestamp, query, orderBy, limit, getDocs, increment,
-        writeBatch, getDoc, deleteDoc
+        writeBatch, getDoc
       } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 
       const firebaseConfig = {
@@ -312,7 +311,7 @@
 
       // Expose for later scripts
       window.__auth = { auth, getIdToken, user: null };
-      window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc, deleteDoc  };
+      window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc  };
 
       // Refs
       const loginBtn       = document.getElementById('loginBtn');
@@ -406,66 +405,53 @@
       }
 
       onAuthStateChanged(auth, async (user) => {
-  window.__auth.user = user || null;  // Set user to null if logged out, else set user data
+        window.__auth.user = user || null;
 
-  if (user) {  // If the user is signed in
-    // Display user details (name, email, profile photo)
-    userNameEl.textContent = user.displayName || '';
-    userEmailEl.textContent = user.email || '';
-    if (user.photoURL) {
-      userPhotoEl.src = user.photoURL;
-      userPhotoEl.style.display = '';  // Show the profile photo
-    } else {
-      userPhotoEl.style.display = 'none';  // Hide the profile photo if not available
-    }
+        if (user) {
+          userNameEl.textContent  = user.displayName || '';
+          userEmailEl.textContent = user.email || '';
+          if (user.photoURL) {
+            userPhotoEl.src = user.photoURL;
+            userPhotoEl.style.display = '';
+          } else userPhotoEl.style.display = 'none';
 
-    // Update the profile page with the user's information
-    profileNameEl.textContent = user.displayName || '';
-    profileEmailEl.textContent = user.email || '';
-    if (user.photoURL) {
-      userAvatarEl.textContent = '';
-      userAvatarEl.style.backgroundImage = `url(${user.photoURL})`;  // Set the profile picture as background
-      userAvatarEl.style.backgroundSize = 'cover';
-      userAvatarEl.style.backgroundPosition = 'center';
-    } else {
-      userAvatarEl.style.backgroundImage = '';
-      userAvatarEl.textContent = '👤';  // Default avatar
-    }
+          profileNameEl.textContent  = user.displayName || '';
+          profileEmailEl.textContent = user.email || '';
+          if (user.photoURL) {
+            userAvatarEl.textContent = '';
+            userAvatarEl.style.backgroundImage = url(${user.photoURL});
+            userAvatarEl.style.backgroundSize = 'cover';
+            userAvatarEl.style.backgroundPosition = 'center';
+          } else {
+            userAvatarEl.style.backgroundImage = '';
+            userAvatarEl.textContent = '👤';
+          }
 
-    // Hide the login screen and show the app's main container
-    authScreen.style.display = 'none';
-    appContainer.style.display = '';
-    authBar.style.display = '';
-    loginReqEl.style.display = 'none';
+          authScreen.style.display   = 'none';
+          appContainer.style.display = '';
+          authBar.style.display      = '';
+          loginReqEl.style.display   = 'none';
 
-    try {
-      // Sync chats from Firestore if the function is available
-      if (window.syncChatsFromFirestore) await window.syncChatsFromFirestore(user.uid);
-    } catch (e) {
-      console.error("Error syncing chats:", e);
-    }
-    enableAppControls(true);  // Enable app controls if the user is signed in
+          try { if (window.syncChatsFromFirestore) await window.syncChatsFromFirestore(user.uid); } catch {}
+          enableAppControls(true);
+        } else {
+          userNameEl.textContent  = '';
+          userEmailEl.textContent = '';
+          userPhotoEl.style.display = 'none';
+          profileNameEl.textContent  = '';
+          profileEmailEl.textContent = '';
+          userAvatarEl.style.backgroundImage = '';
+          userAvatarEl.textContent = '👤';
 
-  } else {  // If the user is signed out
-    // Clear the user details from the UI
-    userNameEl.textContent = '';
-    userEmailEl.textContent = '';
-    userPhotoEl.style.display = 'none';  // Hide the profile photo
-    profileNameEl.textContent = '';
-    profileEmailEl.textContent = '';
-    userAvatarEl.style.backgroundImage = '';
-    userAvatarEl.textContent = '👤';  // Set default avatar
+          authScreen.style.display   = 'grid';
+          appContainer.style.display = 'none';
+          authBar.style.display      = 'none';
+          loginReqEl.style.display   = 'none';
 
-    // Show the login screen and hide the main app container
-    authScreen.style.display = 'grid';
-    appContainer.style.display = 'none';
-    authBar.style.display = 'none';
-    loginReqEl.style.display = 'none';
-
-    enableAppControls(false);  // Disable app controls when the user is signed out
-    window.__auth.lastIdToken = null;  // Clear any stored authentication token
-  }
-});
+          enableAppControls(false);
+          window.__auth.lastIdToken = null;
+        }
+      });
 
       // Lang card toggles (module side)
       const langCard = document.getElementById('langCard');
@@ -476,105 +462,83 @@
         langSettings.style.display = open ? 'none' : 'block';
       });
 
+      const speakSelect  = document.getElementById('speakLang');
+      const answerSelect = document.getElementById('answerLang');
+
       const LANG_KEY = "kid_lang_v1";
-const speakSelect = document.getElementById('speakLang');
-const answerSelect = document.getElementById('answerLang');
-const langLabel = document.getElementById('langLabel');
+      function saveLangPrefs() {
+        const data = { speak: speakSelect.value || "", answer: answerSelect.value || "" };
+        localStorage.setItem(LANG_KEY, JSON.stringify(data));
+      }
+      window.loadLangPrefs = function(){
+        try {
+          const data = JSON.parse(localStorage.getItem(LANG_KEY));
+          if (!data) return;
+          if (data.speak) {
+            speakSelect.value = data.speak;
+            const mobileSpeakSel = document.getElementById('mobileSpeakLang');
+            if (mobileSpeakSel) mobileSpeakSel.value = data.speak;
+          }
+          if (data.answer) {
+            answerSelect.value = data.answer;
+            const mobileAnsSel = document.getElementById('mobileAnswerLang');
+            if (mobileAnsSel) mobileAnsSel.value = data.answer;
+          }
+          updateLangLabel();
+        } catch {}
+      }
 
-// Function to save the language preferences to Firestore
-async function saveLangPrefs(uid, speakLang, answerLang) {
-  const { db, doc, setDoc } = window.__db;
-  const ref = doc(db, 'users', uid, 'meta', 'languagePrefs');
-  await setDoc(ref, { speakLang, answerLang }, { merge: true });
-}
+      window.updateLangLabel = function(){
+        const speak = speakSelect.value || 'Speaking';
+        const ans   = answerSelect.value || 'Answer';
+        langLabel.textContent = speak + ' → ' + ans;
+        const mobileLabel = document.getElementById('mobileLangLabel');
+        if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
+      }
 
-// Function to load language preferences from Firestore
-async function loadLangPrefs(uid) {
-  const { db, doc, getDoc } = window.__db;
-  const ref = doc(db, 'users', uid, 'meta', 'languagePrefs');
-  const snap = await getDoc(ref);
-  
-  if (snap.exists()) {
-    const data = snap.data();
-    if (data.speakLang) {
-      speakSelect.value = data.speakLang;
-      const mobileSpeakSel = document.getElementById('mobileSpeakLang');
-      if (mobileSpeakSel) mobileSpeakSel.value = data.speakLang;
-    }
-    if (data.answerLang) {
-      answerSelect.value = data.answerLang;
-      const mobileAnsSel = document.getElementById('mobileAnswerLang');
-      if (mobileAnsSel) mobileAnsSel.value = data.answerLang;
-    }
-    // Update the language label
-    updateLangLabel();
-  }
-}
+      function safeValidateAndSave(){ safeValidate(); saveLangPrefs(); }
 
-// Update the language label in UI
-function updateLangLabel() {
-  const speak = speakSelect.value || 'Speaking';
-  const ans = answerSelect.value || 'Answer';
-  langLabel.textContent = speak + ' → ' + ans;
+      speakSelect?.addEventListener('change', ()=>{
+        const mobileSpeak = document.getElementById('mobileSpeakLang');
+        if (mobileSpeak && mobileSpeak.value !== speakSelect.value) mobileSpeak.value = speakSelect.value;
+        updateLangLabel(); safeValidateAndSave();
+      });
+      answerSelect?.addEventListener('change', ()=>{
+        const mobileAnswer = document.getElementById('mobileAnswerLang');
+        if (mobileAnswer && mobileAnswer.value !== answerSelect.value) mobileAnswer.value = answerSelect.value;
+        updateLangLabel(); safeValidateAndSave();
+      });
 
-  const mobileLabel = document.getElementById('mobileLangLabel');
-  if (mobileLabel) {
-    mobileLabel.textContent = speak + ' → ' + ans;
-  }
-}
+      const mobileLangCard = document.getElementById('mobileLangCard');
+      const mobileLangSettings = document.getElementById('mobileLangSettings');
+      mobileLangCard?.addEventListener('click', ()=>{
+        const open = mobileLangSettings.style.display !== 'none';
+        mobileLangSettings.style.display = open ? 'none' : 'block';
+      });
+      const mobileSpeak = document.getElementById('mobileSpeakLang');
+      const mobileAnswer = document.getElementById('mobileAnswerLang');
 
-// Save language preferences when changed
-speakSelect?.addEventListener('change', async () => {
-  const uid = window.__auth?.user?.uid;
-  if (uid) {
-    await saveLangPrefs(uid, speakSelect.value, answerSelect.value);
-  }
-});
+      function updateMobileLangLabel() {
+        const speak = mobileSpeak.value || 'Speaking';
+        const ans   = mobileAnswer.value || 'Answer';
+        const mobileLabel = document.getElementById('mobileLangLabel');
+        if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
+      }
+      mobileSpeak?.addEventListener('change', ()=>{
+        if (speakSelect.value !== mobileSpeak.value) {
+          speakSelect.value = mobileSpeak.value;
+          updateLangLabel(); safeValidate();
+        }
+        updateMobileLangLabel();
+      });
+      mobileAnswer?.addEventListener('change', ()=>{
+        if (answerSelect.value !== mobileAnswer.value) {
+          answerSelect.value = mobileAnswer.value;
+          updateLangLabel(); safeValidate();
+        }
+        updateMobileLangLabel();
+      });
 
-answerSelect?.addEventListener('change', async () => {
-  const uid = window.__auth?.user?.uid;
-  if (uid) {
-    await saveLangPrefs(uid, speakSelect.value, answerSelect.value);
-  }
-});
-
-// Mobile language preferences sync
-const mobileLangCard = document.getElementById('mobileLangCard');
-const mobileLangSettings = document.getElementById('mobileLangSettings');
-mobileLangCard?.addEventListener('click', () => {
-  const open = mobileLangSettings.style.display !== 'none';
-  mobileLangSettings.style.display = open ? 'none' : 'block';
-});
-
-const mobileSpeak = document.getElementById('mobileSpeakLang');
-const mobileAnswer = document.getElementById('mobileAnswerLang');
-
-function updateMobileLangLabel() {
-  const speak = mobileSpeak.value || 'Speaking';
-  const ans = mobileAnswer.value || 'Answer';
-  const mobileLabel = document.getElementById('mobileLangLabel');
-  if (mobileLabel) {
-    mobileLabel.textContent = speak + ' → ' + ans;
-  }
-}
-
-mobileSpeak?.addEventListener('change', () => {
-  if (speakSelect.value !== mobileSpeak.value) {
-    speakSelect.value = mobileSpeak.value;
-    updateLangLabel();
-    saveLangPrefs(window.__auth?.user?.uid, speakSelect.value, answerSelect.value);
-  }
-  updateMobileLangLabel();
-});
-
-mobileAnswer?.addEventListener('change', () => {
-  if (answerSelect.value !== mobileAnswer.value) {
-    answerSelect.value = mobileAnswer.value;
-    updateLangLabel();
-    saveLangPrefs(window.__auth?.user?.uid, speakSelect.value, answerSelect.value);
-  }
-  updateMobileLangLabel();
-});
       // Expose sync function name for optional call above
       window.syncChatsFromFirestore = async function(uid){ /* no-op placeholder */ };
     </script>
@@ -748,63 +712,6 @@ async function saveChatSummary(uid, chatId, summary) {
   }
 }
 
-// ---- Memory extraction from free text ----
-function deriveMemoryPatchFromText(text) {
-  const patch = {};
-  if (!text) return patch;
-
-  // Name
-  let m = text.match(/\b(?:my\s+name\s+is|i\s*am|i'm)\s+([A-Za-z][A-Za-z\s.'-]{1,40})\b/i);
-  if (m) patch.name = m[1].trim();
-
-  // Age
-  m = text.match(/\bI\s*am\s*(\d{1,2})\s*(?:years?\s*old|yo)\b/i);
-  if (m) patch.age = Number(m[1]);
-
-  // City
-  m = text.match(/\bI\s*live\s*in\s*([A-Za-z][A-Za-z\s.'-]{1,40})\b/i);
-  if (m) patch.city = m[1].trim();
-  m = text.match(/\b(?:from|based\s*in)\s*([A-Za-z][A-Za-z\s.'-]{1,40})\b/i);
-  if (m && !patch.city) patch.city = m[1].trim();
-
-  // Languages
-  const langs = [];
-  const langRegex = /\b(?:I\s*(?:speak|know|am\s*learning)\s*)(English|Hindi|Tamil|Telugu|Kannada|Malayalam|Marathi|Gujarati|Bengali|Punjabi|Panjabi)\b/ig;
-  let lm; while ((lm = langRegex.exec(text)) !== null) langs.push(lm[1]);
-  if (langs.length) patch.languages = Array.from(new Set([...(patch.languages||[]), ...langs]));
-
-  // Interests
-  const interestRegex = /\bI\s*like\s*(?:to\s*)?([A-Za-z][A-Za-z\s,'-]{1,50})\b/i;
-  m = text.match(interestRegex);
-  if (m) {
-    const interests = (patch.interests || []);
-    m[1].split(/,|and/).map(s=>s.trim()).filter(Boolean).forEach(v=>{
-      if (!interests.includes(v)) interests.push(v);
-    });
-    patch.interests = interests;
-  }
-
-  // Goal
-  m = text.match(/\bmy\s*(?:goal|dream|plan)\s*(?:is|:)\s*([A-Za-z][A-Za-z\s,'-]{3,120})/i);
-  if (m) patch.goal = m[1].trim();
-
-  return patch;
-}
-
-// ---- Pretty summary for /me ----
-function formatMemorySummary(mem = {}) {
-  const parts = [];
-  if (mem.name) parts.push(`**Name:** ${mem.name}`);
-  if (mem.age) parts.push(`**Age:** ${mem.age}`);
-  if (mem.city) parts.push(`**City:** ${mem.city}`);
-  if (Array.isArray(mem.languages) && mem.languages.length) parts.push(`**Languages:** ${mem.languages.join(', ')}`);
-  if (mem.speakLanguage || mem.answerLanguage) {
-    parts.push(`**App Languages:** Speak = ${mem.speakLanguage||'-'}, Answer = ${mem.answerLanguage||'-'}`);
-  }
-  if (Array.isArray(mem.interests) && mem.interests.length) parts.push(`**Interests:** ${mem.interests.join(', ')}`);
-  if (mem.goal) parts.push(`**Goal:** ${mem.goal}`);
-  return parts.length ? parts.join('\n') : "_I don't have anything stored yet. Tell me about you!_";
-}
 
       // ---------- UI: render chat list ----------
       let currentChatId = null;
@@ -815,14 +722,14 @@ function formatMemorySummary(mem = {}) {
           div.className="chatitem"+(chat.id===currentChatId?" active":"");
           const d=new Date(chat.createdAt);
           const when=d.toLocaleDateString()+" "+d.toLocaleTimeString();
-          div.innerHTML=`
+          div.innerHTML=
             <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
               <div>
                 <div style="font-weight:600">${chat.title}</div>
                 <div style="font-size:.85rem;color:#666">${when}</div>
               </div>
               <button class="chat-del" title="Delete this chat" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">🗑️</button>
-            </div>`;
+            </div>;
           div.onclick=()=>loadChat(chat.id);
           const delBtn=div.querySelector('.chat-del');
           delBtn.addEventListener('click',(e)=>{ e.stopPropagation(); deleteChat(chat.id); });
@@ -868,7 +775,7 @@ function formatMemorySummary(mem = {}) {
       textInput.addEventListener('input', validateLangs);
 
       async function getStream(){ try{ return await navigator.mediaDevices.getUserMedia({audio:true}); }catch{ alert("Microphone permission is required."); throw new Error("no-mic"); } }
-      function fmt(sec){const m=String(Math.floor(sec/60)).padStart(2,'0');const s=String(Math.floor(sec%60)).padStart(2,'0');return `${m}:${s}`;}
+      function fmt(sec){const m=String(Math.floor(sec/60)).padStart(2,'0');const s=String(Math.floor(sec%60)).padStart(2,'0');return ${m}:${s};}
       function startTimer(){timerBadge.style.display='inline-block';startTs=Date.now();tickInt=setInterval(()=>{timerBadge.textContent=fmt((Date.now()-startTs)/1000);},250);}
       function stopTimer(){clearInterval(tickInt);tickInt=null;timerBadge.style.display='none';}
 
@@ -943,7 +850,7 @@ function formatMemorySummary(mem = {}) {
       // --- Single JSON-aware SSE reader (keep one) ---
       async function readSSEStream(res, onEvent){
         if (!res || !res.body) throw new Error('No response body to read');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(HTTP ${res.status});
         const reader=res.body.getReader(); const decoder=new TextDecoder(); let buf='';
         while(true){
           const { value, done } = await reader.read(); if (done) break;
@@ -999,9 +906,10 @@ function formatMemorySummary(mem = {}) {
         fd.append('uid', uid);
         fd.append('memory', JSON.stringify(memory||{}));
         fd.append('chatSummary', JSON.stringify(chatSummary||''));
+
         try{
           const headers = await getAuthHeader();
-          const res = await fetch(`${API_BASE}/api/ask`, { method:'POST', headers:{ ...headers, 'Accept':'text/event-stream' }, body: fd });
+          const res = await fetch(${API_BASE}/api/ask, { method:'POST', headers:{ ...headers, 'Accept':'text/event-stream' }, body: fd });
 
           const bubble = createStreamingAssistantBubble();
           let assistantFull=''; let userTranscript='';
@@ -1021,20 +929,16 @@ function formatMemorySummary(mem = {}) {
                 appendTurnToChat(userTranscript, assistantFull);
 
                 // memory patch (inside function)
-                // ---- Memory patch (enhanced) ----
-const basePatch = {};
-if (!memory?.speakLanguage && speakLangSel.value) basePatch.speakLanguage = speakLangSel.value;
-if (!memory?.answerLanguage && answerLangSel.value) basePatch.answerLanguage = answerLangSel.value;
-
-const newFacts = deriveMemoryPatchFromText(userTranscript || '');
-const finalPatch = { ...basePatch, ...newFacts };
-
-if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
+                const patch={};
+                if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage=speakLangSel.value;
+                if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage=answerLangSel.value;
+                const m=userTranscript.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i); if (m) patch.name=m[1].trim();
+                if (Object.keys(patch).length) saveUserMemory(uid, patch);
 
                 // rolling chat summary
                 const chat=getChat(currentChatId);
                 if (chat && chat.messages?.length){
-                  const lastK=chat.messages.slice(-8).map(m=>`${m.role}: ${m.content}`).join('\n');
+                  const lastK=chat.messages.slice(-8).map(m=>${m.role}: ${m.content}).join('\n');
                   const naiveSummary=(lastK.length>480? lastK.slice(0,480)+'…':lastK);
                   saveChatSummary(uid,currentChatId,naiveSummary);
                 }
@@ -1059,19 +963,6 @@ if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
         if (!window.__auth?.user){ statusEl.textContent="Please sign in first."; return; }
         const textVal=textInput.value.trim(); if (!textVal){ statusEl.textContent="Please type something first."; return; }
         if (!validateLangs()){ statusEl.textContent="Please select both languages."; return; }
-        if (/^\/me\b/i.test(textVal) || /\babout\s+me\b/i.test(textVal)) {
-    const uid = window.__auth?.user?.uid;
-    if (!uid) { statusEl.textContent = "Please sign in first."; return; }
-    const mem = await loadUserMemory(uid);
-    const summary = formatMemorySummary(mem);
-    appendTurnToChat(textVal, summary);
-    transcriptEl.textContent = textVal;
-    answerEl.textContent = summary;
-    textInput.value='';
-    validateLangs();
-    statusEl.textContent = 'Loaded your profile from memory.';
-    return; // skip network call
-  }
 
         textInput.value=""; player.style.display='none'; loadingBar.style.display='block'; statusEl.textContent="";
         appendTurnToChat(textVal, null);
@@ -1092,7 +983,7 @@ if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
 
         try{
           const headers = Object.assign({ 'Content-Type':'application/json', 'Accept':'text/event-stream' }, await getAuthHeader());
-          const res = await fetch(`${API_BASE}/api/ask`, { method:'POST', headers, body: JSON.stringify(body) });
+          const res = await fetch(${API_BASE}/api/ask, { method:'POST', headers, body: JSON.stringify(body) });
           if (!res.ok){ loadingBar.style.display='none'; let msg='Request failed'; try{ msg=(await res.json())?.message||msg; }catch{} statusEl.textContent=msg; return; }
 
           let assistantFull='';
@@ -1110,20 +1001,15 @@ if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
                 updateSuggestions(evt.suggestions || []); statusEl.textContent='Done! Ask a follow-up or switch chats.'; textInput.value=''; validateLangs();
 
                 // memory patch (inside function)
-                // ---- Memory patch (enhanced) ----
-const basePatch = {};
-if (!memory?.speakLanguage && speakLangSel.value) basePatch.speakLanguage = speakLangSel.value;
-if (!memory?.answerLanguage && answerLangSel.value) basePatch.answerLanguage = answerLangSel.value;
-
-const newFacts = deriveMemoryPatchFromText(textVal || '');
-const finalPatch = { ...basePatch, ...newFacts };
-
-if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
-
+                const patch={};
+                if (!memory?.speakLanguage && speakLangSel.value) patch.speakLanguage=speakLangSel.value;
+                if (!memory?.answerLanguage && answerLangSel.value) patch.answerLanguage=answerLangSel.value;
+                const m=textVal.match(/my name is\s+([A-Za-z][A-Za-z\s'-]{1,40})/i); if (m) patch.name=m[1].trim();
+                if (Object.keys(patch).length) saveUserMemory(uid, patch);
 
                 const chat=getChat(currentChatId);
                 if (chat && chat.messages?.length){
-                  const lastK=chat.messages.slice(-8).map(m=>`${m.role}: ${m.content}`).join('\n');
+                  const lastK=chat.messages.slice(-8).map(m=>${m.role}: ${m.content}).join('\n');
                   const naiveSummary=(lastK.length>480? lastK.slice(0,480)+'…':lastK);
                   saveChatSummary(uid,currentChatId,naiveSummary);
                 }
@@ -1138,7 +1024,6 @@ if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
       }
       sendTextBtn.addEventListener('click', sendText);
       textInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
-
 
       function renderThread(){
         const threadEl=document.getElementById('chatThread'); threadEl.innerHTML='';
@@ -1180,96 +1065,17 @@ if (Object.keys(finalPatch).length) saveUserMemory(uid, finalPatch);
         else { sidebar.classList.add('open'); document.body.style.overflow='hidden'; }
       });
 
-      // Memory editor wiring
-const memoryBtn = document.getElementById('memoryBtn');
-const memoryModal = document.getElementById('memoryModal');
-const memName = document.getElementById('memName');
-const memAge = document.getElementById('memAge');
-const memCity = document.getElementById('memCity');
-const memLangs = document.getElementById('memLangs');
-const memInterests = document.getElementById('memInterests');
-const memGoal = document.getElementById('memGoal');
-
-document.getElementById('memCancel').onclick = ()=> memoryModal.style.display='none';
-document.getElementById('memSave').onclick = async ()=>{
-  const uid = window.__auth?.user?.uid;
-  if (!uid) { alert('Please sign in first'); return; }
-  const patch = {
-    name: memName.value.trim() || undefined,
-    age: memAge.value ? Number(memAge.value) : undefined,
-    city: memCity.value.trim() || undefined,
-    languages: memLangs.value ? memLangs.value.split(',').map(s=>s.trim()).filter(Boolean) : undefined,
-    interests: memInterests.value ? memInterests.value.split(',').map(s=>s.trim()).filter(Boolean) : undefined,
-    goal: memGoal.value.trim() || undefined,
-  };
-  await saveUserMemory(uid, patch);
-  memoryModal.style.display='none';
-  statusEl.textContent = 'Memory saved.';
-};
-
-memoryBtn.onclick = async ()=>{
-  const uid = window.__auth?.user?.uid;
-  if (!uid) { alert('Please sign in first'); return; }
-  const mem = await loadUserMemory(uid);
-  memName.value = mem.name || '';
-  memAge.value = mem.age || '';
-  memCity.value = mem.city || '';
-  memLangs.value = Array.isArray(mem.languages) ? mem.languages.join(', ') : (mem.speakLanguage ? [mem.speakLanguage, mem.answerLanguage].filter(Boolean).join(', ') : '');
-  memInterests.value = Array.isArray(mem.interests) ? mem.interests.join(', ') : '';
-  memGoal.value = mem.goal || '';
-  memoryModal.style.display = 'flex';
-};
-
-      window.addEventListener('load', async () => {
-    try {
-        // Load saved language preferences if available
-        await loadLangPrefs?.();
-
-        // Load all saved chats and display the first one if available
-        const all = loadAllChats();
-        if (all.length > 0) loadChat(all[0].id);
-
-        // Validate language selections (e.g., ensure both are selected)
-        validateLangs();
-
-        // Render the chat thread
-        renderThread();
-
-        // Sync mobile language selectors with main ones
-        const mSpeak = document.getElementById('mobileSpeakLang');
-        const mAns = document.getElementById('mobileAnswerLang');
-        if (mSpeak) mSpeak.value = speakLangSel.value;  // Sync mobile speak language
-        if (mAns) mAns.value = answerLangSel.value;    // Sync mobile answer language
-
-        // Update mobile language label
-        const mobileLabel = document.getElementById('mobileLangLabel');
-        if (mobileLabel) {
-            mobileLabel.textContent = (speakLangSel.value || 'Speaking') + ' → ' + (answerLangSel.value || 'Answer');
-        }
-    } catch (error) {
-        console.error("Error during page load:", error);
-    }
-});
-
+      window.addEventListener('load', ()=>{
+        loadLangPrefs?.();
+        const all=loadAllChats(); if (all.length>0) loadChat(all[0].id);
+        validateLangs(); renderThread(); updateLangLabel?.();
+        const mSpeak=document.getElementById('mobileSpeakLang');
+        const mAns=document.getElementById('mobileAnswerLang');
+        if (mSpeak) mSpeak.value=speakLangSel.value;
+        if (mAns)   mAns.value=answerLangSel.value;
+        const mobileLabel=document.getElementById('mobileLangLabel');
+        if (mobileLabel) mobileLabel.textContent=(speakLangSel.value||'Speaking')+' → '+(answerLangSel.value||'Answer');
+      });
     </script>
-    <div id="memoryModal" style="display:none; position:fixed; inset:0; background:#0005; z-index:99999; align-items:center; justify-content:center;">
-  <div style="width:min(520px,92vw); background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
-    <h3 style="margin:0 0 8px;">Your Memory</h3>
-    <div style="display:grid; gap:8px;">
-      <label>Name <input id="memName" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Age <input id="memAge" type="number" min="1" max="120" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>City <input id="memCity" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Languages (comma-separated) <input id="memLangs" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Interests (comma-separated) <input id="memInterests" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-      <label>Goal <input id="memGoal" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px;"></label>
-    </div>
-    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-      <button id="memCancel" class="btn-auth">Cancel</button>
-      <button id="memSave" class="btn-auth btn-email">Save</button>
-    </div>
-  </div>
-</div>
   </body>
 </html>
-
-
