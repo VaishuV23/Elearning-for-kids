@@ -406,53 +406,66 @@
       }
 
       onAuthStateChanged(auth, async (user) => {
-        window.__auth.user = user || null;
+  window.__auth.user = user || null;  // Set user to null if logged out, else set user data
 
-        if (user) {
-          userNameEl.textContent  = user.displayName || '';
-          userEmailEl.textContent = user.email || '';
-          if (user.photoURL) {
-            userPhotoEl.src = user.photoURL;
-            userPhotoEl.style.display = '';
-          } else userPhotoEl.style.display = 'none';
+  if (user) {  // If the user is signed in
+    // Display user details (name, email, profile photo)
+    userNameEl.textContent = user.displayName || '';
+    userEmailEl.textContent = user.email || '';
+    if (user.photoURL) {
+      userPhotoEl.src = user.photoURL;
+      userPhotoEl.style.display = '';  // Show the profile photo
+    } else {
+      userPhotoEl.style.display = 'none';  // Hide the profile photo if not available
+    }
 
-          profileNameEl.textContent  = user.displayName || '';
-          profileEmailEl.textContent = user.email || '';
-          if (user.photoURL) {
-            userAvatarEl.textContent = '';
-            userAvatarEl.style.backgroundImage = `url(${user.photoURL})`;
-            userAvatarEl.style.backgroundSize = 'cover';
-            userAvatarEl.style.backgroundPosition = 'center';
-          } else {
-            userAvatarEl.style.backgroundImage = '';
-            userAvatarEl.textContent = '👤';
-          }
+    // Update the profile page with the user's information
+    profileNameEl.textContent = user.displayName || '';
+    profileEmailEl.textContent = user.email || '';
+    if (user.photoURL) {
+      userAvatarEl.textContent = '';
+      userAvatarEl.style.backgroundImage = `url(${user.photoURL})`;  // Set the profile picture as background
+      userAvatarEl.style.backgroundSize = 'cover';
+      userAvatarEl.style.backgroundPosition = 'center';
+    } else {
+      userAvatarEl.style.backgroundImage = '';
+      userAvatarEl.textContent = '👤';  // Default avatar
+    }
 
-          authScreen.style.display   = 'none';
-          appContainer.style.display = '';
-          authBar.style.display      = '';
-          loginReqEl.style.display   = 'none';
+    // Hide the login screen and show the app's main container
+    authScreen.style.display = 'none';
+    appContainer.style.display = '';
+    authBar.style.display = '';
+    loginReqEl.style.display = 'none';
 
-          try { if (window.syncChatsFromFirestore) await window.syncChatsFromFirestore(user.uid); } catch {}
-          enableAppControls(true);
-        } else {
-          userNameEl.textContent  = '';
-          userEmailEl.textContent = '';
-          userPhotoEl.style.display = 'none';
-          profileNameEl.textContent  = '';
-          profileEmailEl.textContent = '';
-          userAvatarEl.style.backgroundImage = '';
-          userAvatarEl.textContent = '👤';
+    try {
+      // Sync chats from Firestore if the function is available
+      if (window.syncChatsFromFirestore) await window.syncChatsFromFirestore(user.uid);
+    } catch (e) {
+      console.error("Error syncing chats:", e);
+    }
+    enableAppControls(true);  // Enable app controls if the user is signed in
 
-          authScreen.style.display   = 'grid';
-          appContainer.style.display = 'none';
-          authBar.style.display      = 'none';
-          loginReqEl.style.display   = 'none';
+  } else {  // If the user is signed out
+    // Clear the user details from the UI
+    userNameEl.textContent = '';
+    userEmailEl.textContent = '';
+    userPhotoEl.style.display = 'none';  // Hide the profile photo
+    profileNameEl.textContent = '';
+    profileEmailEl.textContent = '';
+    userAvatarEl.style.backgroundImage = '';
+    userAvatarEl.textContent = '👤';  // Set default avatar
 
-          enableAppControls(false);
-          window.__auth.lastIdToken = null;
-        }
-      });
+    // Show the login screen and hide the main app container
+    authScreen.style.display = 'grid';
+    appContainer.style.display = 'none';
+    authBar.style.display = 'none';
+    loginReqEl.style.display = 'none';
+
+    enableAppControls(false);  // Disable app controls when the user is signed out
+    window.__auth.lastIdToken = null;  // Clear any stored authentication token
+  }
+});
 
       // Lang card toggles (module side)
       const langCard = document.getElementById('langCard');
@@ -463,83 +476,105 @@
         langSettings.style.display = open ? 'none' : 'block';
       });
 
-      const speakSelect  = document.getElementById('speakLang');
-      const answerSelect = document.getElementById('answerLang');
-
       const LANG_KEY = "kid_lang_v1";
-      function saveLangPrefs() {
-        const data = { speak: speakSelect.value || "", answer: answerSelect.value || "" };
-        localStorage.setItem(LANG_KEY, JSON.stringify(data));
-      }
-      window.loadLangPrefs = function(){
-        try {
-          const data = JSON.parse(localStorage.getItem(LANG_KEY));
-          if (!data) return;
-          if (data.speak) {
-            speakSelect.value = data.speak;
-            const mobileSpeakSel = document.getElementById('mobileSpeakLang');
-            if (mobileSpeakSel) mobileSpeakSel.value = data.speak;
-          }
-          if (data.answer) {
-            answerSelect.value = data.answer;
-            const mobileAnsSel = document.getElementById('mobileAnswerLang');
-            if (mobileAnsSel) mobileAnsSel.value = data.answer;
-          }
-          updateLangLabel();
-        } catch {}
-      }
+const speakSelect = document.getElementById('speakLang');
+const answerSelect = document.getElementById('answerLang');
+const langLabel = document.getElementById('langLabel');
 
-      window.updateLangLabel = function(){
-        const speak = speakSelect.value || 'Speaking';
-        const ans   = answerSelect.value || 'Answer';
-        langLabel.textContent = speak + ' → ' + ans;
-        const mobileLabel = document.getElementById('mobileLangLabel');
-        if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
-      }
+// Function to save the language preferences to Firestore
+async function saveLangPrefs(uid, speakLang, answerLang) {
+  const { db, doc, setDoc } = window.__db;
+  const ref = doc(db, 'users', uid, 'meta', 'languagePrefs');
+  await setDoc(ref, { speakLang, answerLang }, { merge: true });
+}
 
-      function safeValidateAndSave(){ safeValidate(); saveLangPrefs(); }
+// Function to load language preferences from Firestore
+async function loadLangPrefs(uid) {
+  const { db, doc, getDoc } = window.__db;
+  const ref = doc(db, 'users', uid, 'meta', 'languagePrefs');
+  const snap = await getDoc(ref);
+  
+  if (snap.exists()) {
+    const data = snap.data();
+    if (data.speakLang) {
+      speakSelect.value = data.speakLang;
+      const mobileSpeakSel = document.getElementById('mobileSpeakLang');
+      if (mobileSpeakSel) mobileSpeakSel.value = data.speakLang;
+    }
+    if (data.answerLang) {
+      answerSelect.value = data.answerLang;
+      const mobileAnsSel = document.getElementById('mobileAnswerLang');
+      if (mobileAnsSel) mobileAnsSel.value = data.answerLang;
+    }
+    // Update the language label
+    updateLangLabel();
+  }
+}
 
-      speakSelect?.addEventListener('change', ()=>{
-        const mobileSpeak = document.getElementById('mobileSpeakLang');
-        if (mobileSpeak && mobileSpeak.value !== speakSelect.value) mobileSpeak.value = speakSelect.value;
-        updateLangLabel(); safeValidateAndSave();
-      });
-      answerSelect?.addEventListener('change', ()=>{
-        const mobileAnswer = document.getElementById('mobileAnswerLang');
-        if (mobileAnswer && mobileAnswer.value !== answerSelect.value) mobileAnswer.value = answerSelect.value;
-        updateLangLabel(); safeValidateAndSave();
-      });
+// Update the language label in UI
+function updateLangLabel() {
+  const speak = speakSelect.value || 'Speaking';
+  const ans = answerSelect.value || 'Answer';
+  langLabel.textContent = speak + ' → ' + ans;
 
-      const mobileLangCard = document.getElementById('mobileLangCard');
-      const mobileLangSettings = document.getElementById('mobileLangSettings');
-      mobileLangCard?.addEventListener('click', ()=>{
-        const open = mobileLangSettings.style.display !== 'none';
-        mobileLangSettings.style.display = open ? 'none' : 'block';
-      });
-      const mobileSpeak = document.getElementById('mobileSpeakLang');
-      const mobileAnswer = document.getElementById('mobileAnswerLang');
+  const mobileLabel = document.getElementById('mobileLangLabel');
+  if (mobileLabel) {
+    mobileLabel.textContent = speak + ' → ' + ans;
+  }
+}
 
-      function updateMobileLangLabel() {
-        const speak = mobileSpeak.value || 'Speaking';
-        const ans   = mobileAnswer.value || 'Answer';
-        const mobileLabel = document.getElementById('mobileLangLabel');
-        if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
-      }
-      mobileSpeak?.addEventListener('change', ()=>{
-        if (speakSelect.value !== mobileSpeak.value) {
-          speakSelect.value = mobileSpeak.value;
-          updateLangLabel(); safeValidate();
-        }
-        updateMobileLangLabel();
-      });
-      mobileAnswer?.addEventListener('change', ()=>{
-        if (answerSelect.value !== mobileAnswer.value) {
-          answerSelect.value = mobileAnswer.value;
-          updateLangLabel(); safeValidate();
-        }
-        updateMobileLangLabel();
-      });
+// Save language preferences when changed
+speakSelect?.addEventListener('change', async () => {
+  const uid = window.__auth?.user?.uid;
+  if (uid) {
+    await saveLangPrefs(uid, speakSelect.value, answerSelect.value);
+  }
+});
 
+answerSelect?.addEventListener('change', async () => {
+  const uid = window.__auth?.user?.uid;
+  if (uid) {
+    await saveLangPrefs(uid, speakSelect.value, answerSelect.value);
+  }
+});
+
+// Mobile language preferences sync
+const mobileLangCard = document.getElementById('mobileLangCard');
+const mobileLangSettings = document.getElementById('mobileLangSettings');
+mobileLangCard?.addEventListener('click', () => {
+  const open = mobileLangSettings.style.display !== 'none';
+  mobileLangSettings.style.display = open ? 'none' : 'block';
+});
+
+const mobileSpeak = document.getElementById('mobileSpeakLang');
+const mobileAnswer = document.getElementById('mobileAnswerLang');
+
+function updateMobileLangLabel() {
+  const speak = mobileSpeak.value || 'Speaking';
+  const ans = mobileAnswer.value || 'Answer';
+  const mobileLabel = document.getElementById('mobileLangLabel');
+  if (mobileLabel) {
+    mobileLabel.textContent = speak + ' → ' + ans;
+  }
+}
+
+mobileSpeak?.addEventListener('change', () => {
+  if (speakSelect.value !== mobileSpeak.value) {
+    speakSelect.value = mobileSpeak.value;
+    updateLangLabel();
+    saveLangPrefs(window.__auth?.user?.uid, speakSelect.value, answerSelect.value);
+  }
+  updateMobileLangLabel();
+});
+
+mobileAnswer?.addEventListener('change', () => {
+  if (answerSelect.value !== mobileAnswer.value) {
+    answerSelect.value = mobileAnswer.value;
+    updateLangLabel();
+    saveLangPrefs(window.__auth?.user?.uid, speakSelect.value, answerSelect.value);
+  }
+  updateMobileLangLabel();
+});
       // Expose sync function name for optional call above
       window.syncChatsFromFirestore = async function(uid){ /* no-op placeholder */ };
     </script>
@@ -1185,17 +1220,37 @@ memoryBtn.onclick = async ()=>{
   memoryModal.style.display = 'flex';
 };
 
-      window.addEventListener('load', ()=>{
-        loadLangPrefs?.();
-        const all=loadAllChats(); if (all.length>0) loadChat(all[0].id);
-        validateLangs(); renderThread(); updateLangLabel?.();
-        const mSpeak=document.getElementById('mobileSpeakLang');
-        const mAns=document.getElementById('mobileAnswerLang');
-        if (mSpeak) mSpeak.value=speakLangSel.value;
-        if (mAns)   mAns.value=answerLangSel.value;
-        const mobileLabel=document.getElementById('mobileLangLabel');
-        if (mobileLabel) mobileLabel.textContent=(speakLangSel.value||'Speaking')+' → '+(answerLangSel.value||'Answer');
-      });
+      window.addEventListener('load', async () => {
+    try {
+        // Load saved language preferences if available
+        await loadLangPrefs?.();
+
+        // Load all saved chats and display the first one if available
+        const all = loadAllChats();
+        if (all.length > 0) loadChat(all[0].id);
+
+        // Validate language selections (e.g., ensure both are selected)
+        validateLangs();
+
+        // Render the chat thread
+        renderThread();
+
+        // Sync mobile language selectors with main ones
+        const mSpeak = document.getElementById('mobileSpeakLang');
+        const mAns = document.getElementById('mobileAnswerLang');
+        if (mSpeak) mSpeak.value = speakLangSel.value;  // Sync mobile speak language
+        if (mAns) mAns.value = answerLangSel.value;    // Sync mobile answer language
+
+        // Update mobile language label
+        const mobileLabel = document.getElementById('mobileLangLabel');
+        if (mobileLabel) {
+            mobileLabel.textContent = (speakLangSel.value || 'Speaking') + ' → ' + (answerLangSel.value || 'Answer');
+        }
+    } catch (error) {
+        console.error("Error during page load:", error);
+    }
+});
+
     </script>
     <div id="memoryModal" style="display:none; position:fixed; inset:0; background:#0005; z-index:99999; align-items:center; justify-content:center;">
   <div style="width:min(520px,92vw); background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px;">
