@@ -757,7 +757,12 @@ async function saveChatSummary(uid, chatId, summary) {
         else { currentChatId=all[0].id; }
         renderChatList();
       })();
-      newChatBtn.addEventListener('click', ()=>{ const c=createChat(); loadChat(c.id); });
+      newChatBtn.addEventListener('click', () => {
+    const c = createChat();
+    loadChat(c.id);
+    updateSuggestions([]);  // Clear suggestions for the new chat
+});
+
       document.getElementById('clearAllBtn').addEventListener('click', deleteAllChats);
 
       // ---------- Recording ----------
@@ -1050,6 +1055,12 @@ async function saveChatSummary(uid, chatId, summary) {
 
       function renderThread() {
     const threadEl = document.getElementById('chatThread');
+    const suggestionsEl = document.getElementById('suggestions');
+    
+    // Clear previous chat suggestions when a new chat is loaded
+    suggestionsEl.innerHTML = '';
+    suggestionsEl.style.display = 'none';  // Hide suggestions
+
     threadEl.innerHTML = ''; // Clear the chat thread before appending new messages
 
     const chat = getChat(currentChatId);
@@ -1080,24 +1091,31 @@ async function saveChatSummary(uid, chatId, summary) {
     }, 0);
 }
 
-      function updateSuggestions(suggestions=[]){
-        const suggestionsEl=document.getElementById('suggestions');
-        const prompts=(Array.isArray(suggestions)&&suggestions.length)? suggestions : [
-          'Can you give me another example?',
-          'Could you explain this in simpler words?',
-          'What else should I know about this topic?'
-        ];
-        suggestionsEl.innerHTML='';
-        prompts.forEach(p=>{
-          const btn=document.createElement('button');
-          btn.className='suggestion-btn'; btn.textContent=p;
-          btn.addEventListener('click',()=>{ textInput.value=p; sendText(); });
-          suggestionsEl.appendChild(btn);
+
+      function updateSuggestions(suggestions = []) {
+    const suggestionsEl = document.getElementById('suggestions');
+    const prompts = (Array.isArray(suggestions) && suggestions.length) ? suggestions : [
+        'Can you give me another example?',
+        'Could you explain this in simpler words?',
+        'What else should I know about this topic?'
+    ];
+
+    suggestionsEl.innerHTML = '';
+    prompts.forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'suggestion-btn';
+        btn.textContent = p;
+        btn.addEventListener('click', () => {
+            textInput.value = p;
+            sendText();
         });
-        suggestionsEl.style.display='flex';
-      }
+        suggestionsEl.appendChild(btn);
+    });
+    suggestionsEl.style.display = 'flex';  // Show suggestions
+}
 
       const toggleBtn=document.getElementById('toggleSidebarBtn');
+    
       const sidebar=document.getElementById('sidebar');
       toggleBtn.addEventListener('click', ()=>{
         const open=sidebar.classList.contains('open');
