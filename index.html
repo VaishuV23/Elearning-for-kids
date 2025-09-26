@@ -137,9 +137,9 @@ body {
 }
 
 .btn-facebook {
-  background: #1877F2;
+  background: #1877f2;
   color: #fff;
-  border-color: #1877F2;
+  border-color: #1877f2;
 }
 
 .btn-email {
@@ -185,14 +185,8 @@ body {
 .app-container {
   flex: 1;
   display: flex;
-  min-height: 0;
+  min-height: 100vh;
   overflow: hidden;
-}
-
-.side h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
 }
 
 /* Sidebar styles */
@@ -202,7 +196,7 @@ body {
   background-color: #333;
   color: white;
   position: fixed;
-  left: -250px; /* Hidden initially */
+  left: -250px; /* Initially hidden */
   top: 0;
   transition: 0.3s ease;
   padding-top: 20px;
@@ -288,50 +282,301 @@ body {
   border-radius: 8px;
 }
 
-/* Main content area */
-.app-container {
-  display: flex;
-  width: 100%;
-  flex-grow: 1;
+/* Default - Hide mobile header */
+#mobileHeader {
+  display: none;
 }
 
-.content {
-  margin-left: 20px;
-  padding: 20px;
-  flex: 1;
-}
-
-/* Mobile responsiveness */
+/* On smaller screens (<= 940px) */
 @media (max-width: 940px) {
   .side {
     width: 75%; /* Sidebar width on mobile */
+    transform: translateX(-100%); /* Sidebar is hidden initially */
   }
 
-  .mobile-toggle {
-    display: inline-block;
+  .side.open {
+    transform: translateX(0); /* Sidebar becomes visible */
   }
 
-  /* Show mobile header */
   #mobileHeader {
     display: block; /* Mobile header becomes visible */
   }
 
-  /* Hide the sidebar by default on mobile */
-  .side {
-    transform: translateX(-100%);
-  }
-
-  /* Show the sidebar when it's open */
-  .side.open {
-    transform: translateX(0);
+  /* Show the mobile toggle button */
+  .mobile-toggle {
+    display: inline-block; /* Visible on both desktop and mobile */
   }
 }
 
-/* For large screens, you can make adjustments if needed */
+/* On larger screens (>= 941px) */
 @media (min-width: 941px) {
-  /* Optional: Styles for large screens */
+  /* Optional: You can add styles for large screens if needed */
 }
 
+.chat-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.chatitem {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chatitem:hover {
+  background: #f1f5f9;
+}
+
+.chatitem.active {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.user-profile {
+  padding: 1rem;
+  border-top: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-profile .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(17, 17, 17, 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.user-profile .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-profile .info .name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile .info .email {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.status {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+#loadingBar {
+  display: none;
+  width: 100%;
+  padding: 0.6rem;
+  background: #4caf50;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  margin: 0 1rem 0.5rem;
+  font-weight: 600;
+}
+
+#chatThread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--bg);
+  border-top: 1px solid var(--bd);
+  border-bottom: 1px solid var(--bd);
+}
+
+.msg {
+  max-width: 70%;
+  padding: 0.6rem 1rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  line-height: 1.4;
+  word-break: break-word;
+  font-size: 0.95rem;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #dbeafe, #c7d2fe);
+  border-top-right-radius: 0;
+}
+
+.msg.assistant {
+  align-self: flex-start;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-top-left-radius: 0;
+}
+
+.msg.assistant :is(p, ul, ol, pre, code, blockquote, h1, h2, h3) {
+  margin: 0.25rem 0;
+}
+
+.msg.assistant pre {
+  padding: 0.6rem;
+  border-radius: 8px;
+  overflow: auto;
+  background: #1111/4;
+}
+
+.msg.assistant code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+  background: #1111/4;
+}
+
+.msg.assistant a {
+  color: #0b62ff;
+  text-decoration: none;
+}
+
+.msg.assistant a:hover {
+  text-decoration: underline;
+}
+
+#suggestions {
+  display: none;
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.suggestion-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid var(--bd);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.suggestion-btn:hover {
+  background: #e2e8f0;
+}
+
+#player {
+  margin: 0 1rem 1rem;
+  width: calc(100% - 2rem);
+}
+
+.input-panel {
+  border-top: 1px solid var(--bd);
+  padding: 1rem;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--bd);
+  border-radius: 16px;
+}
+
+#recordBtn,
+#pauseBtn,
+#sendBtn,
+#sendTextBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: var(--primary-contrast);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+#recordBtn.recording {
+  background: #dc2626;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+#sendBtn[disabled],
+#sendTextBtn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#textInput {
+  flex: 1;
+  min-height: 24px;
+  max-height: 120px;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+}
+
+#timer {
+  position: absolute;
+  top: -1.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.2rem 0.6rem;
+  background: #dc2626;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  display: none;
+}
+
+#transcript,
+#answer {
+  display: none;
+}
 
     </style>
   </head>
