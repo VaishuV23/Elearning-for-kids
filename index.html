@@ -29,8 +29,7 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+html, body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -41,21 +40,168 @@ body {
   flex-direction: column;
 }
 
-/* Sidebar styles */
-.side {
-  height: 100vh;
-  width: 250px;
-  background-color: #333;
-  color: white;
+/* Auth bar */
+#authBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--bd);
+  background: #fff;
+  z-index: 10;
+}
+
+#authBar .user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#authBar img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--bd);
+  display: none;
+}
+
+#authBar .user-name {
+  font-weight: 600;
+}
+
+#authBar .user-email {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Auth screen */
+#authScreen {
   position: fixed;
-  left: -250px; /* Initially hidden */
-  top: 0;
-  transition: 0.3s ease;
-  padding-top: 20px;
+  inset: 0;
+  background: radial-gradient(1200px 600px at 10% 0%, #ffffff 60%, #f6f7fb 100%);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+}
+
+.auth-card {
+  width: min(520px, 92vw);
+  background: #fff;
+  border: 1px solid var(--bd);
+  border-radius: 16px;
+  padding: 28px 28px 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.auth-title {
+  margin: 6px 0 2px;
+  font-size: 28px;
+}
+
+.auth-sub {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.auth-stack {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+/* Buttons */
+.btn-auth {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--bd);
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.btn-auth:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.btn-auth:active {
+  transform: translateY(1px);
+}
+
+.btn-facebook {
+  background: #1877F2;
+  color: #fff;
+  border-color: #1877F2;
+}
+
+.btn-email {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.btn-phone {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}
+
+/* Auth separator */
+.auth-sep {
+  margin: 10px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.auth-sep:before,
+.auth-sep:after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--bd);
+}
+
+.auth-sep span {
+  padding: 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.auth-foot {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* App layout */
+.app-container {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.side h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .side.open {
-  left: 0; /* Sidebar becomes visible when 'open' class is added */
+  transform: translateX(0);
 }
 
 .side .header {
@@ -82,7 +228,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* Language Card */
+/* Language card */
 .lang-card {
   cursor: pointer;
   padding: 0.5rem 0.75rem;
@@ -100,7 +246,6 @@ body {
   border-color: var(--bd);
 }
 
-/* Language Settings */
 .lang-settings {
   margin-top: 0.75rem;
   padding: 0.75rem;
@@ -125,85 +270,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* Mobile toggle button */
-.mobile-toggle {
-  display: inline-block;
-  margin: 0.5rem 1rem;
-  cursor: pointer;
-  background: var(--card);
-  border: 1px solid var(--bd);
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  position: absolute;
-  z-index: 1000;
-  top: 0;
-  left: 0;
-}
-
-/* Default - Hide mobile header */
-#mobileHeader {
-  display: none;
-}
-
-/* On smaller screens (<= 940px) */
-@media (max-width: 940px) {
-  .side {
-    width: 75%; /* Sidebar width on mobile */
-    transform: translateX(-100%); /* Sidebar is hidden initially */
-  }
-
-  .side.open {
-    transform: translateX(0); /* Sidebar becomes visible */
-  }
-
-  #mobileHeader {
-    display: block; /* Mobile header becomes visible */
-  }
-
-  /* Show the mobile toggle button */
-  .mobile-toggle {
-    display: inline-block; /* Visible on both desktop and mobile */
-  }
-}
-
-/* Main content styles */
-.app-container {
-  flex: 1;
-  display: flex;
-  min-height: 100vh;
-  overflow: hidden;
-}
-
-.content {
-  margin-left: 250px; /* Sidebar width */
-  padding: 20px;
-  flex: 1;
-  margin-top: 20px;
-}
-
-/* Sidebar toggle button */
-.toggle-btn {
-  position: absolute;
-  left: 10px;
-  top: 10px;
-  font-size: 24px;
-  background: #333;
-  color: white;
-  border: none;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 5px;
-  z-index: 1001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s;
-}
-
-.toggle-btn:hover {
-  background-color: #575757;
-}
-
+/* Chat list */
 .chat-list-header {
   display: flex;
   align-items: center;
@@ -229,6 +296,7 @@ body {
   border-color: #c7d2fe;
 }
 
+/* User profile */
 .user-profile {
   padding: 1rem;
   border-top: 1px solid var(--bd);
@@ -270,6 +338,7 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Main content */
 main {
   flex: 1;
   display: flex;
@@ -277,17 +346,19 @@ main {
   min-height: 0;
 }
 
+/* Status */
 .status {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   color: var(--muted);
 }
 
+/* Loading bar */
 #loadingBar {
   display: none;
   width: 100%;
   padding: 0.6rem;
-  background: #4caf50;
+  background: #4CAF50;
   color: #fff;
   text-align: center;
   border-radius: 8px;
@@ -295,6 +366,7 @@ main {
   font-weight: 600;
 }
 
+/* Chat thread */
 #chatThread {
   flex: 1;
   overflow-y: auto;
@@ -302,11 +374,9 @@ main {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  background: var(--bg);
-  border-top: 1px solid var(--bd);
-  border-bottom: 1px solid var(--bd);
 }
 
+/* Messages */
 .msg {
   max-width: 70%;
   padding: 0.6rem 1rem;
@@ -355,6 +425,7 @@ main {
   text-decoration: underline;
 }
 
+/* Suggestions */
 #suggestions {
   display: none;
   padding: 0.5rem 1rem;
@@ -377,11 +448,13 @@ main {
   background: #e2e8f0;
 }
 
+/* Player */
 #player {
   margin: 0 1rem 1rem;
   width: calc(100% - 2rem);
 }
 
+/* Input panel */
 .input-panel {
   border-top: 1px solid var(--bd);
   padding: 1rem;
@@ -421,17 +494,9 @@ main {
 }
 
 @keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.05);
-  }
-
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 #sendBtn[disabled],
@@ -467,6 +532,47 @@ main {
 #transcript,
 #answer {
   display: none;
+}
+
+/* Mobile toggle */
+#mobileHeader { display: none; }
+
+.mobile-toggle {
+  display: inline-block;
+  margin: 0.5rem 1rem;
+  cursor: pointer;
+  background: var(--card);
+  border: 1px solid var(--bd);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+}
+
+/* Mobile sidebar */
+@media (max-width: 940px) {
+  .side {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 75%;
+    height: 100vh;
+    z-index: 999;
+    background: #fff;
+    border-right: 1px solid var(--bd);
+    overflow: auto;
+    transition: transform 0.3s ease-out;
+    transform: translateX(-100%);
+  }
+
+  .side.open {
+    transform: translateX(0);
+  }
+
+  #mobileHeader { display: block; }
+}
+
+/* Large screens */
+@media (min-width: 941px) {
+  /* Optional: styles for large screens */
 }
 
     </style>
