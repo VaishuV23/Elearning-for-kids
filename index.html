@@ -91,43 +91,56 @@
     display: none;
 }
 
-/* On smaller screens (<= 940px) */
-@media (max-width: 940px) {
-    /* Sidebar style */
-    .side {
-  position: fixed;
-  top: 0;
-  left: 0; /* Moves the button to the left */
-  width: 75%;
-  height: 100vh;
-  z-index: 999;
-  background: #fff;
-  border-right: 1px solid var(--bd);
-  overflow: auto;
-  transition: transform .3s ease-out;
-  transform: translateX(-100%);
-}
- 
+
 
     /* Show mobile toggle button */
+/* Show mobile toggle button on all screen sizes */
 .mobile-toggle {
-  position: absolute;
-  top: 20px;  /* You can adjust this value to move the button vertically */
-  left: 20px;  /* Moves the button to the left */
-  display: inline-block;
-  margin: 0.5rem 1rem;
-  cursor: pointer;
-  background: var(--card);
-  border: 1px solid var(--bd);
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+    display: inline-block; /* Visible on both desktop and mobile */
+    margin: 0.5rem 1rem;
+    cursor: pointer;
+    background: var(--card);
+    border: 1px solid var(--bd);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
 }
+
+/* Default - Hide mobile header */
+#mobileHeader {
+    display: none;
+}
+
+/* On smaller screens (<= 940px) */
+@media (max-width: 940px) {
+    .side {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 75%; /* Sidebar width on mobile */
+        height: 100vh;
+        z-index: 999;
+        background: #fff;
+        border-right: 1px solid var(--bd);
+        overflow: auto;
+        transition: transform 0.3s ease-out;
+        transform: translateX(-100%); /* Sidebar is hidden */
+    }
+
+    .side.open {
+        transform: translateX(0); /* Sidebar becomes visible */
+    }
 
     /* Show mobile header */
     #mobileHeader {
         display: block; /* Mobile header becomes visible on mobile */
     }
-  
+}
+
+/* On large screens, no need to adjust the button */
+@media (min-width: 941px) {
+    /* Optional: You can add some styles for large screens if needed */
+}
+
 }
 
     </style>
