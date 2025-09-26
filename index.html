@@ -39,7 +39,19 @@
       .auth-sep span{padding:0 6px;font-size:12px;letter-spacing:.3px}
       .auth-foot{margin:14px 0 0;color:var(--muted);font-size:12px}
       .app-container{flex:1;display:flex;min-height:0;overflow:hidden}
-      .side {position: fixed;top: 0;left: 0;width: 280px;height: 100vh;background: var(--card);border-right: 1px solid var(--bd);display: flex;flex-direction: column;transition: transform 0.3s ease-out;transform: translateX(-100%)}     
+.side {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background: var(--card);
+    border-right: 1px solid var(--bd);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease-out;
+    transform: translateX(-100%);  /* Initially hidden */
+}
       .side h1{margin:0;font-size:1.2rem;font-weight:600}
       .side.open {transform: translateX(0)}
       .side .header{padding:1rem;border-bottom:1px solid var(--bd)}
@@ -112,15 +124,17 @@
     }
 
     /* Show mobile toggle button */
-    .mobile-toggle {
-        display: inline-block; /* Button will be shown on mobile */
-        margin: 0.5rem 1rem;
-        cursor: pointer;
-        background: var(--card);
-        border: 1px solid var(--bd);
-        padding: 0.5rem 0.75rem;
-        border-radius: 8px;
-    }
+   .mobile-toggle {
+    display: inline-block;
+    margin: 0.5rem 1rem;
+    cursor: pointer;
+    background: var(--card);
+    border: 1px solid var(--bd);
+    padding: 0.3rem 0.75rem;  /* Adjust padding for better size */
+    border-radius: 8px;
+    font-size: 1rem;  /* Adjust font size */
+    text-align: center;
+}
 
     /* Show mobile header */
     #mobileHeader {
@@ -166,7 +180,8 @@
       Please sign in to start using Kid Speak &amp; Learn.
     </div>
 
-    <button id="toggleSidebarBtn" class="mobile-toggle">Recent Chats</button>
+    <button id="toggleSidebarBtn" class="mobile-toggle">☰ Open Sidebar</button>
+
 
     <div class="app-container">
       <aside class="side" id="sidebar">
