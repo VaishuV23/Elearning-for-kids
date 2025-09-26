@@ -14,21 +14,24 @@
     -->
     <title>Kid Speak &amp; Learn</title>
     <style>
-     :root {
-  --card: #FADADD; /* Pastel Pink for cards */
+    @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Baloo+2&display=swap');
+
+:root {
+  --card: #FADADD;
   --ink: #111;
-  --muted: #666;
+  --muted: #444;
   --bd: #e5e7eb;
-  --bg: #E0F7FA; /* Light Blue for background */
-  --primary: #00BFFF; /* Bright Blue */
+  --bg: #E0F7FA;
+  --primary: #00BFFF;
   --primary-contrast: #fff;
-  --accent: #FFD700; /* Sunshine Yellow */
-  --button-bg: #32CD32; /* Lime Green */
-  --button-hover: #28a745; /* Slightly darker green for hover effect */
-  --button-active: #16a34a; /* Darker green for active button */
-  --footer-text: #555; /* Darker text for footer */
-  --highlight-bg: #FF7F50; /* Soft Coral accent */
-  --soft-bg: #E6E6FA; /* Light Lavender */
+  --accent: #FFD700;
+  --button-bg: #32CD32;
+  --button-hover: #28a745;
+  --button-active: #16a34a;
+  --footer-text: #555;
+  --highlight-bg: #FF7F50;
+  --soft-bg: #E6E6FA;
+  --fun-font: 'Comic Neue', 'Baloo 2', cursive;
 }
 
 * {
@@ -40,7 +43,7 @@ html, body {
   padding: 0;
   height: 100%;
   font-family: system-ui, Segoe UI, Roboto, Arial;
-  background: var(--bg); /* Light Blue */
+  background: linear-gradient(135deg, #E0F7FA, #FADADD);
   color: var(--ink);
   display: flex;
   flex-direction: column;
@@ -91,12 +94,16 @@ html, body {
 
 .auth-card {
   width: min(520px, 92vw);
-  background: var(--card); /* Pastel Pink */
+  background: var(--card);
   border: 1px solid var(--bd);
   border-radius: 16px;
   padding: 28px 28px 22px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, .08);
   text-align: center;
+  transition: transform 0.3s ease;
+}
+.auth-card:hover {
+  transform: translateY(-4px);
 }
 
 .brand {
@@ -104,16 +111,19 @@ html, body {
   letter-spacing: .2px;
   font-size: 18px;
   margin-bottom: 6px;
+  font-family: var(--fun-font);
 }
 
 .auth-title {
   margin: 6px 0 2px;
   font-size: 28px;
+  font-family: var(--fun-font);
 }
 
 .auth-sub {
   margin: 0 0 16px;
   color: var(--muted);
+  font-size: 1rem;
 }
 
 .auth-stack {
@@ -130,15 +140,20 @@ html, body {
   background: var(--button-bg);
   font-weight: 600;
   cursor: pointer;
-  transition: transform .05s ease, box-shadow .25s ease, border-color .25s ease;
+  transition: transform .2s ease, box-shadow .25s ease;
 }
-
 .btn-auth:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .1);
 }
-
 .btn-auth:active {
-  transform: translateY(1px);
+  transform: scale(0.98);
+  animation: clickPop 0.2s ease;
+}
+@keyframes clickPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 
 .btn-facebook {
@@ -146,17 +161,26 @@ html, body {
   color: #fff;
   border-color: #1877F2;
 }
+.btn-facebook::before {
+  content: "📘 ";
+}
 
 .btn-email {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
 }
+.btn-email::before {
+  content: "📧 ";
+}
 
 .btn-phone {
   background: var(--button-bg);
   color: #fff;
   border-color: var(--button-bg);
+}
+.btn-phone::before {
+  content: "📱 ";
 }
 
 .auth-sep {
@@ -166,14 +190,12 @@ html, body {
   gap: 10px;
   color: var(--muted);
 }
-
 .auth-sep:before, .auth-sep:after {
   content: "";
   flex: 1;
   height: 1px;
   background: var(--bd);
 }
-
 .auth-sep span {
   padding: 0 6px;
   font-size: 12px;
@@ -183,7 +205,7 @@ html, body {
 .auth-foot {
   margin: 14px 0 0;
   color: var(--footer-text);
-  font-size: 12px;
+  font-size: 1rem;
 }
 
 .app-container {
@@ -197,6 +219,7 @@ html, body {
   margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
+  font-family: var(--fun-font);
 }
 
 .side.open {
@@ -238,7 +261,6 @@ html, body {
   justify-content: space-between;
   transition: background .15s, border-color .15s;
 }
-
 .lang-card:hover {
   background: var(--accent);
   border-color: var(--bd);
@@ -251,14 +273,12 @@ html, body {
   border: 1px solid var(--bd);
   border-radius: 8px;
 }
-
 .lang-settings label {
   font-size: .75rem;
   color: var(--muted);
   display: block;
   margin-bottom: .25rem;
 }
-
 .lang-settings select {
   width: 100%;
   padding: .5rem;
@@ -283,11 +303,9 @@ html, body {
   cursor: pointer;
   transition: background .15s, border-color .15s;
 }
-
 .chatitem:hover {
   background: #f1f5f9;
 }
-
 .chatitem.active {
   background: #eef2ff;
   border-color: #c7d2fe;
@@ -300,7 +318,6 @@ html, body {
   align-items: center;
   gap: .75rem;
 }
-
 .user-profile .avatar {
   width: 32px;
   height: 32px;
@@ -312,12 +329,10 @@ html, body {
   justify-content: center;
   font-size: .9rem;
 }
-
 .user-profile .info {
   flex: 1;
   min-width: 0;
 }
-
 .user-profile .info .name {
   font-size: .9rem;
   font-weight: 600;
@@ -325,7 +340,6 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .user-profile .info .email {
   font-size: .75rem;
   color: var(--muted);
@@ -481,18 +495,6 @@ main {
   animation: pulse 1s infinite;
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 #sendBtn[disabled], #sendTextBtn[disabled] {
   opacity: .5;
   cursor: not-allowed;
@@ -526,12 +528,10 @@ main {
   display: none;
 }
 
-/* Default - Hide mobile header */
 #mobileHeader {
   display: none;
 }
 
-/* Show mobile toggle button */
 .mobile-toggle {
   display: inline-block;
   margin: 0.5rem 1rem;
@@ -542,12 +542,6 @@ main {
   border-radius: 8px;
 }
 
-/* Default - Hide mobile header */
-#mobileHeader {
-  display: none;
-}
-
-/* On smaller screens (<= 940px) */
 @media (max-width: 940px) {
   .side {
     position: fixed;
@@ -567,16 +561,15 @@ main {
     transform: translateX(0);
   }
 
-  /* Show mobile header */
   #mobileHeader {
     display: block;
   }
 }
 
-/* On large screens, no need to adjust the button */
 @media (min-width: 941px) {
-  /* Optional: You can add some styles for large screens if needed */
+  /* Optional: Add styles for large screens if needed */
 }
+
 
     </style>
   </head>
