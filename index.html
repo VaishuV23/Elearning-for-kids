@@ -84,22 +84,53 @@
       #textInput{flex:1;min-height:24px;max-height:120px;resize:none;border:none;outline:none;background:transparent;font-size:.95rem}
       #timer{position:absolute;top:-1.6rem;left:50%;transform:translateX(-50%);padding:.2rem .6rem;background:#dc2626;color:#fff;border-radius:999px;font-size:.75rem;display:none}
       #transcript,#answer{display:none}
-      .mobile-toggle{display:none}
-      #mobileHeader{display:none}
-      @media (max-width:940px){
-        .side{position:fixed;top:0;left:0;width:75%;height:100vh;z-index:999;background:#fff;border-right:1px solid var(--bd);overflow:auto;transition:transform .3s ease-out;transform:translateX(-100%)}
-        .side.open{transform:translateX(0)}
+ /* Default - Hide mobile toggle button */
 .mobile-toggle {
-    display: inline-block;
-    margin: 0.5rem 1rem;
-    cursor: pointer;
-    background: var(--card);
-    border: 1px solid var(--bd);
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-  }
-        #mobileHeader{display:block}
-      }
+    display: none;
+}
+
+/* Default - Hide mobile header */
+#mobileHeader {
+    display: none;
+}
+
+/* On smaller screens (<= 940px) */
+@media (max-width: 940px) {
+    /* Sidebar style */
+    .side {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 75%; /* Sidebar width on mobile */
+        height: 100vh;
+        z-index: 999;
+        background: #fff;
+        border-right: 1px solid var(--bd);
+        overflow: auto;
+        transition: transform 0.3s ease-out;
+        transform: translateX(-100%); /* Sidebar is hidden */
+    }
+    .side.open {
+        transform: translateX(0); /* Sidebar becomes visible */
+    }
+
+    /* Show mobile toggle button */
+    .mobile-toggle {
+        display: inline-block; /* Button will be shown on mobile */
+        margin: 0.5rem 1rem;
+        cursor: pointer;
+        background: var(--card);
+        border: 1px solid var(--bd);
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+    }
+
+    /* Show mobile header */
+    #mobileHeader {
+        display: block; /* Mobile header becomes visible on mobile */
+    }
+}
+
     </style>
   </head>
   <body>
