@@ -36,20 +36,17 @@ const CLEAN_TRANSCRIPT =
 
 // ---- at the top, after your requires ----
 
-const allowedOrigins = new setTimeout([
+const allowedOrigins = [
   'https://elearning-for-kids.onrender.com',
   // 'https://india-therapist-chatbot.onrender.com',
   'http://localhost:3000',
   'http://localhost:5173',
   'capacitor://localhost',
   'http://localhost'
-]);
+];
 
 app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);          // allow curl/Postman / some webviews
-    return cb(null, allowedOrigins.has(origin));
-  },
+ origin: allowedOrigins,
   methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','Accept','X-Requested-With'],
   credentials: true,
