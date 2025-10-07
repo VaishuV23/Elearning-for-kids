@@ -1,27 +1,52 @@
 name: Android Build (Capacitor)
+
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: |
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps & copy web to Android
+        run: |
           npm ci || npm i
           npx cap copy
-      - uses: actions/setup-java@v4
-        with: { distribution: 'temurin', java-version: 17 }
-      - uses: android-actions/setup-android@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # --- Fix Windows line endings & make gradlew executable ---
+      - name: Prepare Gradle wrapper
+        working-directory: android
+        run: |
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
+
       - name: Build APK & AAB
         working-directory: android
         run: |
           ./gradlew assembleRelease
           ./gradlew bundleRelease
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: android-builds
           path: |
