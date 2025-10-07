@@ -5,7 +5,11 @@ import multer from "multer";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import admin from "firebase-admin";
-// import "dotenv/config";
+import path from "path";
+import { fileURLToPath } from "url";   
+// ---------- Fix for __dirname in ES modules ----------
+const __filename = fileURLToPath(import.meta.url);   
+const __dirname = path.dirname(__filename);          
 
 // ---------- Firebase Admin (optional) ----------
 let adminApp;
@@ -32,15 +36,20 @@ const CLEAN_TRANSCRIPT =
 
 // ---- at the top, after your requires ----
 
-const allowedOrigins = [
+const allowedOrigins = new setTimeout([
   'https://elearning-for-kids.onrender.com',
   // 'https://india-therapist-chatbot.onrender.com',
   'http://localhost:3000',
-  'http://localhost:5173'
-];
+  'http://localhost:5173',
+  'capacitor://localhost',
+  'http://localhost'
+]);
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);          // allow curl/Postman / some webviews
+    return cb(null, allowedOrigins.has(origin));
+  },
   methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','Accept','X-Requested-With'],
   credentials: true,
@@ -64,7 +73,10 @@ app.use((req, res, next) => {
 const upload = multer({ storage: multer.memoryStorage() });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-app.use(express.static("."));
+app.use(express.static("web"));
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "web", "index.html"));
+});
 app.use(express.json());
 
 // ---------- Optional Firebase token verify ----------
@@ -111,7 +123,7 @@ app.post('/api/ask', upload.single('audio'), async (req, res) => {
   // Small helper for CORS echo (useful for SSE over some hosts)
   const origin = req.headers.origin;
 if (origin && allowedOrigins.includes(origin)) {
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader(
     'Access-Control-Allow-Headers',
     'Content-Type, Authorization'
