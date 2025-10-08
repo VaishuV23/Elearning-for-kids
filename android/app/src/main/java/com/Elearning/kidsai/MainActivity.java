@@ -1,4 +1,4 @@
-package com.vaishu.elearning;
+package com.Elearning.kidsai;
 
 import com.getcapacitor.BridgeActivity;
 
