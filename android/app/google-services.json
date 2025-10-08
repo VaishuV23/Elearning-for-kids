@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "334841993987",
+    "project_id": "kid-speak-learn",
+    "storage_bucket": "kid-speak-learn.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:334841993987:android:511c1e14327c0598d0e736",
+        "android_client_info": {
+          "package_name": "com.Elearning.kidsai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "334841993987-tbq4uf1j3sognq1cissfk666qas2shot.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Elearning.kidsai",
+            "certificate_hash": "041b70f73a8ccd168f5172f68770b2a5e94c899f"
+          }
+        },
+        {
+          "client_id": "334841993987-hus0r4tff3db0a5ag5ti9uigkf1ov9rr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcQW7mm26gLaBXA2eI9goqfDptTjD3tlQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "334841993987-hus0r4tff3db0a5ag5ti9uigkf1ov9rr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
