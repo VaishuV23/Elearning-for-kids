@@ -813,12 +813,34 @@ main {
 
       // Debounce popup logins
       let loggingIn = false;
-      loginBtn?.addEventListener('click', async () => {
-        if (loggingIn) return; loggingIn = true; loginBtn.disabled = true;
-        try { await signInWithPopup(auth, provider); }
-        catch (e) { alert('Login failed: ' + (e?.message || e)); }
-        finally { loggingIn = false; loginBtn.disabled = false; }
-      });
+      import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/capacitor.esm.js';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+
+loginBtn?.addEventListener('click', async () => {
+  if (loggingIn) return;
+  loggingIn = true;
+  loginBtn.disabled = true;
+
+  try {
+    if (Capacitor.isNativePlatform()) {
+      // Native Android Login (no redirect issue)
+      GoogleAuth.initialize();
+      const googleUser = await GoogleAuth.signIn();
+      const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+      await signInWithCredential(auth, credential);
+      alert(`Welcome ${googleUser.name}!`);
+    } else {
+      // Normal Web Browser Login
+      await signInWithPopup(auth, provider);
+    }
+  } catch (e) {
+    alert('Login failed: ' + (e?.message || e));
+    console.error(e);
+  } finally {
+    loggingIn = false;
+    loginBtn.disabled = false;
+  }
+});
 
       fbLoginBtn?.addEventListener('click', async () => {
         if (loggingIn) return; loggingIn = true; fbLoginBtn.disabled = true;

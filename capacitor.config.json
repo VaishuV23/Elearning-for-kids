@@ -1,5 +1,13 @@
 {
   "appId": "com.Elearning.kidsai",
   "appName": "Elearning for Kids",
-  "webDir": "web"
+  "webDir": "web",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "334841993987-hus0r4tff3db0a5ag5ti9uigkf1ov9rr.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
 }
