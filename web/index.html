@@ -813,8 +813,9 @@ main {
 
       // Debounce popup logins
       let loggingIn = false;
-      import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/capacitor.esm.js';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+      
+import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/capacitor.esm.js';
+import { GoogleAuth } from 'capacitor-google-auth';
 
 loginBtn?.addEventListener('click', async () => {
   if (loggingIn) return;

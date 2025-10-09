@@ -10,9 +10,9 @@
     "build": "echo \"no build step\""
   },
   "dependencies": {
-    "@capacitor/android": "^7.4.3",
+    "@capacitor/android": "^6.2.1",
     "@capacitor/cli": "^7.4.3",
-    "@capacitor/core": "^7.4.3",
+    "@capacitor/core": "^6.2.1",
     "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "cors": "^2.8.5",
     "express": "^4.19.2",
