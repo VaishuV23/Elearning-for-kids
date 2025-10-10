@@ -811,11 +811,20 @@ main {
       const profileEmailEl = document.getElementById('profileEmail');
       const userAvatarEl   = document.getElementById('userAvatar');
 
-      // Debounce popup logins
       let loggingIn = false;
-      
-//import { Capacitor } from 'https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/capacitor.esm.js';
-//import { GoogleAuth } from 'capacitor-google-auth';
+
+// ✅ Dynamically import Capacitor + GoogleAuth only if available (so web doesn’t break)
+let Capacitor, GoogleAuth;
+try {
+  Capacitor = await import('https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/capacitor.esm.js')
+    .then(m => m.Capacitor)
+    .catch(() => null);
+  GoogleAuth = await import('https://cdn.jsdelivr.net/npm/@codetrix-studio/capacitor-google-auth@3.4.0-rc.4/dist/esm/index.js')
+    .then(m => m.GoogleAuth)
+    .catch(() => null);
+} catch (err) {
+  console.warn("Capacitor GoogleAuth not loaded:", err);
+}
 
 loginBtn?.addEventListener('click', async () => {
   if (loggingIn) return;
@@ -823,15 +832,17 @@ loginBtn?.addEventListener('click', async () => {
   loginBtn.disabled = true;
 
   try {
-    if (Capacitor.isNativePlatform()) {
-      // Native Android Login (no redirect issue)
-      GoogleAuth.initialize();
+    if (Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
+      // ✅ Native Android Login (via Capacitor)
+      console.log("Running in Capacitor native mode");
+      await GoogleAuth.initialize();
       const googleUser = await GoogleAuth.signIn();
       const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
       await signInWithCredential(auth, credential);
       alert(`Welcome ${googleUser.name}!`);
     } else {
-      // Normal Web Browser Login
+      // ✅ Browser Login (Firebase popup)
+      console.log("Running in web browser mode");
       await signInWithPopup(auth, provider);
     }
   } catch (e) {
@@ -842,6 +853,7 @@ loginBtn?.addEventListener('click', async () => {
     loginBtn.disabled = false;
   }
 });
+
 
       fbLoginBtn?.addEventListener('click', async () => {
         if (loggingIn) return; loggingIn = true; fbLoginBtn.disabled = true;
