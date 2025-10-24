@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Elearning for Kids</string>
     <string name="title_activity_main">Elearning for Kids</string>
-    <string name="package_name">com.vaishu.elearning</string>
-    <string name="custom_url_scheme">com.vaishu.elearning</string>
+    <string name="package_name">com.Elearning.kidsai</string>
+    <string name="custom_url_scheme">com.Elearning.kidsai</string>
+    <string name="server_client_id">334841993987-tbq4uf1j3sognq1cissfk666qas2shot.apps.googleusercontent.com</string>
 </resources>
