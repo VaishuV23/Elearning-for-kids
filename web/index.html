@@ -765,7 +765,8 @@ main {
     getAuth, GoogleAuthProvider, FacebookAuthProvider,
     signInWithPopup, signInWithCredential, signOut, onAuthStateChanged, getIdToken,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    RecaptchaVerifier, signInWithPhoneNumber
+    RecaptchaVerifier, signInWithPhoneNumber,
+    signInWithRedirect, getRedirectResult
   } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
   import {
     getFirestore, doc, setDoc, updateDoc, collection, addDoc,
@@ -825,7 +826,7 @@ main {
 
   let loggingIn = false;
 
-  // ✅ GOOGLE LOGIN (Native or Web)
+  // ✅ GOOGLE LOGIN (Native, Web, or Mobile)
   loginBtn?.addEventListener('click', async () => {
     if (loggingIn) return;
     loggingIn = true;
@@ -841,7 +842,13 @@ main {
         alert(`Welcome ${googleUser.name || 'User'}!`);
       } else {
         console.log("Web Google login flow");
-        await signInWithPopup(auth, provider);
+        if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+          console.log("Mobile browser detected → using signInWithRedirect");
+          await signInWithRedirect(auth, provider);
+        } else {
+          console.log("Desktop browser → using signInWithPopup");
+          await signInWithPopup(auth, provider);
+        }
       }
     } catch (e) {
       alert('Login failed: ' + (e?.message || e));
@@ -851,6 +858,19 @@ main {
       loginBtn.disabled = false;
     }
   });
+
+  // ✅ Handle Redirect Result
+  getRedirectResult(auth)
+    .then((result) => {
+      if (result?.user) {
+        console.log("Redirect login success:", result.user);
+      }
+    })
+    .catch((error) => {
+      if (!error.message.includes("No redirect operation")) {
+        console.error("Redirect login error:", error);
+      }
+    });
 
   // ✅ FACEBOOK LOGIN
   fbLoginBtn?.addEventListener('click', async () => {
@@ -1057,6 +1077,7 @@ main {
 
   window.syncChatsFromFirestore = async function(uid){ /* no-op placeholder */ };
 </script>
+
 
 
     <!-- Non-module libs -->
