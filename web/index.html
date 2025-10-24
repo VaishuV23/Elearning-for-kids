@@ -757,306 +757,308 @@ main {
 
     <!-- MODULE: Firebase + Auth UI helpers -->
     <script type="module">
-      // --- Safe stub so module can run before non-module defines validateLangs() ---
-      window.validateLangs = window.validateLangs || function(){ return false; };
-      const safeValidate = () => (window.validateLangs ? window.validateLangs() : false);
+  // --- Safe stub so module can run before non-module defines validateLangs() ---
+  window.validateLangs = window.validateLangs || function(){ return false; };
+  const safeValidate = () => (window.validateLangs ? window.validateLangs() : false);
 
-      import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
-      import {
-        getAuth, GoogleAuthProvider, FacebookAuthProvider,
-        signInWithPopup, signOut, onAuthStateChanged, getIdToken,
-        createUserWithEmailAndPassword, signInWithEmailAndPassword,
-        RecaptchaVerifier, signInWithPhoneNumber
-      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
-      import {
-        getFirestore, doc, setDoc, updateDoc, collection, addDoc,
-        serverTimestamp, query, orderBy, limit, getDocs, increment,
-        writeBatch, getDoc
-      } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js';
+  import {
+    getAuth, GoogleAuthProvider, FacebookAuthProvider,
+    signInWithPopup, signInWithCredential, signOut, onAuthStateChanged, getIdToken,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    RecaptchaVerifier, signInWithPhoneNumber
+  } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
+  import {
+    getFirestore, doc, setDoc, updateDoc, collection, addDoc,
+    serverTimestamp, query, orderBy, limit, getDocs, increment,
+    writeBatch, getDoc
+  } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js';
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyARKGvFd051nAxe3lXpkcktBHl46NP38A0",
-        authDomain: "kid-speak-learn.firebaseapp.com",
-        projectId: "kid-speak-learn",
-        storageBucket: "kid-speak-learn.firebasestorage.app",
-        messagingSenderId: "334841993987",
-        appId: "1:334841993987:web:1eebc8a53936d06ed0e736"
-      };
-
-      const app  = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db   = getFirestore(app);
-      const provider   = new GoogleAuthProvider();
-      const fbProvider = new FacebookAuthProvider();
-
-      // Expose for later scripts
-      window.__auth = { auth, getIdToken, user: null };
-      window.__db   = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc  };
-
-      // Refs
-      const loginBtn       = document.getElementById('loginBtn');
-      const fbLoginBtn     = document.getElementById('fbLoginBtn');
-      const phoneLoginBtn  = document.getElementById('phoneLoginBtn');
-      const emailLoginBtn  = document.getElementById('emailLoginBtn');
-      const logoutBtn      = document.getElementById('logoutBtn');
-      const authScreen     = document.getElementById('authScreen');
-      const appContainer   = document.querySelector('.app-container');
-      const authBar        = document.getElementById('authBar');
-      const loginReqEl     = document.getElementById('loginRequired');
-
-      const userNameEl     = document.getElementById('userName');
-      const userEmailEl    = document.getElementById('userEmail');
-      const userPhotoEl    = document.getElementById('userPhoto');
-      const profileNameEl  = document.getElementById('profileName');
-      const profileEmailEl = document.getElementById('profileEmail');
-      const userAvatarEl   = document.getElementById('userAvatar');
-
-      let loggingIn = false;
-
-// ✅ Dynamically import Capacitor + GoogleAuth only if available (so web doesn’t break)
-let Capacitor, GoogleAuth;
-try {
-  Capacitor = await import('https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/capacitor.esm.js')
-    .then(m => m.Capacitor)
-    .catch(() => null);
-  GoogleAuth = await import('https://cdn.jsdelivr.net/npm/@codetrix-studio/capacitor-google-auth@3.4.0-rc.4/dist/esm/index.js')
-    .then(m => m.GoogleAuth)
-    .catch(() => null);
-} catch (err) {
-  console.warn("Capacitor GoogleAuth not loaded:", err);
-}
-
-loginBtn?.addEventListener('click', async () => {
-  if (loggingIn) return;
-  loggingIn = true;
-  loginBtn.disabled = true;
-
+  // ✅ Dynamically import Capacitor & GoogleAuth
+  let Capacitor, GoogleAuth;
   try {
-    if (Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
-      // ✅ Native Android Login (via Capacitor)
-      console.log("Running in Capacitor native mode");
-      await GoogleAuth.initialize();
-      const googleUser = await GoogleAuth.signIn();
-      const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
-      await signInWithCredential(auth, credential);
-      alert(`Welcome ${googleUser.name}!`);
-    } else {
-      // ✅ Browser Login (Firebase popup)
-      console.log("Running in web browser mode");
-      await signInWithPopup(auth, provider);
-    }
-  } catch (e) {
-    alert('Login failed: ' + (e?.message || e));
-    console.error(e);
-  } finally {
-    loggingIn = false;
-    loginBtn.disabled = false;
+    Capacitor = await import('https://cdn.jsdelivr.net/npm/@capacitor/core@7.4.3/dist/capacitor.esm.js')
+      .then(m => m.Capacitor)
+      .catch(() => null);
+    GoogleAuth = await import('https://cdn.jsdelivr.net/npm/@codetrix-studio/capacitor-google-auth@3.4.0-rc.4/dist/esm/index.js')
+      .then(m => m.GoogleAuth)
+      .catch(() => null);
+  } catch (err) {
+    console.warn("Capacitor GoogleAuth not loaded:", err);
   }
-});
 
+  // ✅ Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyARKGvFd051nAxe3lXpkcktBHl46NP38A0",
+    authDomain: "kid-speak-learn.firebaseapp.com",
+    projectId: "kid-speak-learn",
+    storageBucket: "kid-speak-learn.firebasestorage.app",
+    messagingSenderId: "334841993987",
+    appId: "1:334841993987:web:1eebc8a53936d06ed0e736"
+  };
 
-      fbLoginBtn?.addEventListener('click', async () => {
-        if (loggingIn) return; loggingIn = true; fbLoginBtn.disabled = true;
-        try { await signInWithPopup(auth, fbProvider); }
-        catch (e) { alert('Facebook login failed: ' + (e?.message || e)); }
-        finally { loggingIn = false; fbLoginBtn.disabled = false; }
-      });
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+  const fbProvider = new FacebookAuthProvider();
 
-      let appVerifier;
-      function ensureRecaptcha() {
-        if (!appVerifier) {
-          appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-        }
-        return appVerifier;
+  window.__auth = { auth, getIdToken, user: null };
+  window.__db = { db, doc, setDoc, updateDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, increment, writeBatch, getDoc };
+
+  // ---------- DOM ----------
+  const loginBtn = document.getElementById('loginBtn');
+  const fbLoginBtn = document.getElementById('fbLoginBtn');
+  const phoneLoginBtn = document.getElementById('phoneLoginBtn');
+  const emailLoginBtn = document.getElementById('emailLoginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const authScreen = document.getElementById('authScreen');
+  const appContainer = document.querySelector('.app-container');
+  const authBar = document.getElementById('authBar');
+  const loginReqEl = document.getElementById('loginRequired');
+
+  const userNameEl = document.getElementById('userName');
+  const userEmailEl = document.getElementById('userEmail');
+  const userPhotoEl = document.getElementById('userPhoto');
+  const profileNameEl = document.getElementById('profileName');
+  const profileEmailEl = document.getElementById('profileEmail');
+  const userAvatarEl = document.getElementById('userAvatar');
+
+  let loggingIn = false;
+
+  // ✅ GOOGLE LOGIN (Native or Web)
+  loginBtn?.addEventListener('click', async () => {
+    if (loggingIn) return;
+    loggingIn = true;
+    loginBtn.disabled = true;
+
+    try {
+      if (Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
+        console.log("Native Google login flow");
+        await GoogleAuth.initialize();
+        const googleUser = await GoogleAuth.signIn();
+        const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+        await signInWithCredential(auth, credential);
+        alert(`Welcome ${googleUser.name || 'User'}!`);
+      } else {
+        console.log("Web Google login flow");
+        await signInWithPopup(auth, provider);
+      }
+    } catch (e) {
+      alert('Login failed: ' + (e?.message || e));
+      console.error(e);
+    } finally {
+      loggingIn = false;
+      loginBtn.disabled = false;
+    }
+  });
+
+  // ✅ FACEBOOK LOGIN
+  fbLoginBtn?.addEventListener('click', async () => {
+    if (loggingIn) return; loggingIn = true; fbLoginBtn.disabled = true;
+    try { await signInWithPopup(auth, fbProvider); }
+    catch (e) { alert('Facebook login failed: ' + (e?.message || e)); }
+    finally { loggingIn = false; fbLoginBtn.disabled = false; }
+  });
+
+  // ✅ PHONE LOGIN
+  let appVerifier;
+  function ensureRecaptcha() {
+    if (!appVerifier) {
+      appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+    }
+    return appVerifier;
+  }
+
+  phoneLoginBtn?.addEventListener('click', async () => {
+    try {
+      const phone = prompt('Enter mobile with country code (e.g. +91XXXXXXXXXX):');
+      if (!phone) return;
+      const verifier = ensureRecaptcha();
+      const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
+      const code = prompt('Enter the 6-digit OTP you received:');
+      if (!code) return;
+      await confirmation.confirm(code);
+    } catch (e) {
+      if (String(e.message || e).includes('captcha')) {
+        alert('reCAPTCHA failed. Make sure the page is served over HTTPS and try again.');
+      } else if (String(e.code).includes('auth/too-many-requests')) {
+        alert('Too many attempts. Wait a few minutes and try again.');
+      } else {
+        alert('Phone sign-in failed: ' + (e?.message || e));
+      }
+      try { appVerifier = null; } catch {}
+    }
+  });
+
+  // ✅ LOGOUT
+  logoutBtn?.addEventListener('click', async () => {
+    try { await signOut(auth); }
+    catch (e) { console.error('Sign out failed:', e); }
+  });
+
+  // ✅ ENABLE / DISABLE CONTROLS
+  function enableAppControls(enabled) {
+    const textInput = document.getElementById('textInput');
+    const recordBtn = document.getElementById('recordBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const sendTextBtn = document.getElementById('sendTextBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const player = document.getElementById('player');
+    const voiceAct = document.getElementById('voiceActions');
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+
+    if (textInput) textInput.disabled = !enabled;
+    if (recordBtn) recordBtn.disabled = !enabled || !safeValidate();
+    if (sendTextBtn) sendTextBtn.disabled = !enabled || !(textInput?.value.trim()) || !safeValidate();
+    if (pauseBtn) pauseBtn.disabled = !enabled;
+    if (toggleBtn) toggleBtn.disabled = !enabled;
+
+    if (!enabled) {
+      try { player.pause(); player.removeAttribute('src'); player.load(); } catch {}
+      try { if (voiceAct) voiceAct.style.display = 'none'; } catch {}
+    }
+  }
+
+  // ✅ AUTH STATE CHANGES
+  onAuthStateChanged(auth, async (user) => {
+    window.__auth.user = user || null;
+
+    if (user) {
+      userNameEl.textContent = user.displayName || '';
+      userEmailEl.textContent = user.email || '';
+      if (user.photoURL) {
+        userPhotoEl.src = user.photoURL;
+        userPhotoEl.style.display = '';
+      } else userPhotoEl.style.display = 'none';
+
+      profileNameEl.textContent = user.displayName || '';
+      profileEmailEl.textContent = user.email || '';
+      if (user.photoURL) {
+        userAvatarEl.textContent = '';
+        userAvatarEl.style.backgroundImage = `url(${user.photoURL})`;
+        userAvatarEl.style.backgroundSize = 'cover';
+        userAvatarEl.style.backgroundPosition = 'center';
+      } else {
+        userAvatarEl.style.backgroundImage = '';
+        userAvatarEl.textContent = '👤';
       }
 
-      phoneLoginBtn?.addEventListener('click', async () => {
-        try {
-          const phone = prompt('Enter mobile with country code (e.g. +91XXXXXXXXXX):');
-          if (!phone) return;
-          const verifier = ensureRecaptcha();
-          const confirmation = await signInWithPhoneNumber(auth, phone, verifier);
-          const code = prompt('Enter the 6-digit OTP you received:');
-          if (!code) return;
-          await confirmation.confirm(code);
-        } catch (e) {
-          if (String(e.message || e).includes('captcha')) {
-            alert('reCAPTCHA failed. Make sure the page is served over HTTPS and try again.');
-          } else if (String(e.code).includes('auth/too-many-requests')) {
-            alert('Too many attempts. Wait a few minutes and try again.');
-          } else {
-            alert('Phone sign-in failed: ' + (e?.message || e));
-          }
-          try { appVerifier = null; } catch {}
-        }
-      });
+      authScreen.style.display = 'none';
+      appContainer.style.display = '';
+      authBar.style.display = '';
+      loginReqEl.style.display = 'none';
 
-      logoutBtn?.addEventListener('click', async () => {
-        try { await signOut(auth); }
-        catch (e) { console.error('Sign out failed:', e); }
-      });
+      try { if (window.syncChatsFromFirestore) await window.syncChatsFromFirestore(user.uid); } catch {}
+      enableAppControls(true);
+    } else {
+      userNameEl.textContent = '';
+      userEmailEl.textContent = '';
+      userPhotoEl.style.display = 'none';
+      profileNameEl.textContent = '';
+      profileEmailEl.textContent = '';
+      userAvatarEl.style.backgroundImage = '';
+      userAvatarEl.textContent = '👤';
 
-      // Defensive DOM lookups (module executes before non-module defines globals)
-      function enableAppControls(enabled) {
-        const textInput   = document.getElementById('textInput');
-        const recordBtn   = document.getElementById('recordBtn');
-        const sendBtn     = document.getElementById('sendBtn');
-        const sendTextBtn = document.getElementById('sendTextBtn');
-        const pauseBtn    = document.getElementById('pauseBtn');
-        const player      = document.getElementById('player');
-        const voiceAct    = document.getElementById('voiceActions');
-        const toggleBtn   = document.getElementById('toggleSidebarBtn');
+      authScreen.style.display = 'grid';
+      appContainer.style.display = 'none';
+      authBar.style.display = 'none';
+      loginReqEl.style.display = 'none';
 
-        if (textInput)   textInput.disabled   = !enabled;
-        if (recordBtn)   recordBtn.disabled   = !enabled || !safeValidate();
-        if (sendTextBtn) sendTextBtn.disabled = !enabled || !(textInput?.value.trim()) || !safeValidate();
-        if (pauseBtn)    pauseBtn.disabled    = !enabled;
-        if (toggleBtn)   toggleBtn.disabled   = !enabled;
+      enableAppControls(false);
+      window.__auth.lastIdToken = null;
+    }
+  });
 
-        if (!enabled) {
-          try { player.pause(); player.removeAttribute('src'); player.load(); } catch {}
-          try { if (voiceAct) voiceAct.style.display = 'none'; } catch {}
-        }
+  // ✅ LANGUAGE PREFS (unchanged)
+  const langCard = document.getElementById('langCard');
+  const langSettings = document.getElementById('langSettings');
+  const langLabel = document.getElementById('langLabel');
+  langCard?.addEventListener('click', ()=>{
+    const open = langSettings.style.display !== 'none';
+    langSettings.style.display = open ? 'none' : 'block';
+  });
+
+  const speakSelect = document.getElementById('speakLang');
+  const answerSelect = document.getElementById('answerLang');
+  const LANG_KEY = "kid_lang_v1";
+
+  function saveLangPrefs() {
+    const data = { speak: speakSelect.value || "", answer: answerSelect.value || "" };
+    localStorage.setItem(LANG_KEY, JSON.stringify(data));
+  }
+  window.loadLangPrefs = function(){
+    try {
+      const data = JSON.parse(localStorage.getItem(LANG_KEY));
+      if (!data) return;
+      if (data.speak) {
+        speakSelect.value = data.speak;
+        const mobileSpeakSel = document.getElementById('mobileSpeakLang');
+        if (mobileSpeakSel) mobileSpeakSel.value = data.speak;
       }
-
-      onAuthStateChanged(auth, async (user) => {
-        window.__auth.user = user || null;
-
-        if (user) {
-          userNameEl.textContent  = user.displayName || '';
-          userEmailEl.textContent = user.email || '';
-          if (user.photoURL) {
-            userPhotoEl.src = user.photoURL;
-            userPhotoEl.style.display = '';
-          } else userPhotoEl.style.display = 'none';
-
-          profileNameEl.textContent  = user.displayName || '';
-          profileEmailEl.textContent = user.email || '';
-          if (user.photoURL) {
-            userAvatarEl.textContent = '';
-            userAvatarEl.style.backgroundImage = `url(${user.photoURL})`;
-            userAvatarEl.style.backgroundSize = 'cover';
-            userAvatarEl.style.backgroundPosition = 'center';
-          } else {
-            userAvatarEl.style.backgroundImage = '';
-            userAvatarEl.textContent = '👤';
-          }
-
-          authScreen.style.display   = 'none';
-          appContainer.style.display = '';
-          authBar.style.display      = '';
-          loginReqEl.style.display   = 'none';
-
-          try { if (window.syncChatsFromFirestore) await window.syncChatsFromFirestore(user.uid); } catch {}
-          enableAppControls(true);
-        } else {
-          userNameEl.textContent  = '';
-          userEmailEl.textContent = '';
-          userPhotoEl.style.display = 'none';
-          profileNameEl.textContent  = '';
-          profileEmailEl.textContent = '';
-          userAvatarEl.style.backgroundImage = '';
-          userAvatarEl.textContent = '👤';
-
-          authScreen.style.display   = 'grid';
-          appContainer.style.display = 'none';
-          authBar.style.display      = 'none';
-          loginReqEl.style.display   = 'none';
-
-          enableAppControls(false);
-          window.__auth.lastIdToken = null;
-        }
-      });
-
-      // Lang card toggles (module side)
-      const langCard = document.getElementById('langCard');
-      const langSettings = document.getElementById('langSettings');
-      const langLabel = document.getElementById('langLabel');
-      langCard?.addEventListener('click', ()=>{
-        const open = langSettings.style.display !== 'none';
-        langSettings.style.display = open ? 'none' : 'block';
-      });
-
-      const speakSelect  = document.getElementById('speakLang');
-      const answerSelect = document.getElementById('answerLang');
-
-      const LANG_KEY = "kid_lang_v1";
-      function saveLangPrefs() {
-        const data = { speak: speakSelect.value || "", answer: answerSelect.value || "" };
-        localStorage.setItem(LANG_KEY, JSON.stringify(data));
+      if (data.answer) {
+        answerSelect.value = data.answer;
+        const mobileAnsSel = document.getElementById('mobileAnswerLang');
+        if (mobileAnsSel) mobileAnsSel.value = data.answer;
       }
-      window.loadLangPrefs = function(){
-        try {
-          const data = JSON.parse(localStorage.getItem(LANG_KEY));
-          if (!data) return;
-          if (data.speak) {
-            speakSelect.value = data.speak;
-            const mobileSpeakSel = document.getElementById('mobileSpeakLang');
-            if (mobileSpeakSel) mobileSpeakSel.value = data.speak;
-          }
-          if (data.answer) {
-            answerSelect.value = data.answer;
-            const mobileAnsSel = document.getElementById('mobileAnswerLang');
-            if (mobileAnsSel) mobileAnsSel.value = data.answer;
-          }
-          updateLangLabel();
-        } catch {}
-      }
+      updateLangLabel();
+    } catch {}
+  }
 
-      window.updateLangLabel = function(){
-        const speak = speakSelect.value || 'Speaking';
-        const ans   = answerSelect.value || 'Answer';
-        langLabel.textContent = speak + ' → ' + ans;
-        const mobileLabel = document.getElementById('mobileLangLabel');
-        if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
-      }
+  window.updateLangLabel = function(){
+    const speak = speakSelect.value || 'Speaking';
+    const ans = answerSelect.value || 'Answer';
+    langLabel.textContent = speak + ' → ' + ans;
+    const mobileLabel = document.getElementById('mobileLangLabel');
+    if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
+  }
 
-      function safeValidateAndSave(){ safeValidate(); saveLangPrefs(); }
+  function safeValidateAndSave(){ safeValidate(); saveLangPrefs(); }
 
-      speakSelect?.addEventListener('change', ()=>{
-        const mobileSpeak = document.getElementById('mobileSpeakLang');
-        if (mobileSpeak && mobileSpeak.value !== speakSelect.value) mobileSpeak.value = speakSelect.value;
-        updateLangLabel(); safeValidateAndSave();
-      });
-      answerSelect?.addEventListener('change', ()=>{
-        const mobileAnswer = document.getElementById('mobileAnswerLang');
-        if (mobileAnswer && mobileAnswer.value !== answerSelect.value) mobileAnswer.value = answerSelect.value;
-        updateLangLabel(); safeValidateAndSave();
-      });
+  speakSelect?.addEventListener('change', ()=>{
+    const mobileSpeak = document.getElementById('mobileSpeakLang');
+    if (mobileSpeak && mobileSpeak.value !== speakSelect.value) mobileSpeak.value = speakSelect.value;
+    updateLangLabel(); safeValidateAndSave();
+  });
+  answerSelect?.addEventListener('change', ()=>{
+    const mobileAnswer = document.getElementById('mobileAnswerLang');
+    if (mobileAnswer && mobileAnswer.value !== answerSelect.value) mobileAnswer.value = answerSelect.value;
+    updateLangLabel(); safeValidateAndSave();
+  });
 
-      const mobileLangCard = document.getElementById('mobileLangCard');
-      const mobileLangSettings = document.getElementById('mobileLangSettings');
-      mobileLangCard?.addEventListener('click', ()=>{
-        const open = mobileLangSettings.style.display !== 'none';
-        mobileLangSettings.style.display = open ? 'none' : 'block';
-      });
-      const mobileSpeak = document.getElementById('mobileSpeakLang');
-      const mobileAnswer = document.getElementById('mobileAnswerLang');
+  const mobileLangCard = document.getElementById('mobileLangCard');
+  const mobileLangSettings = document.getElementById('mobileLangSettings');
+  mobileLangCard?.addEventListener('click', ()=>{
+    const open = mobileLangSettings.style.display !== 'none';
+    mobileLangSettings.style.display = open ? 'none' : 'block';
+  });
+  const mobileSpeak = document.getElementById('mobileSpeakLang');
+  const mobileAnswer = document.getElementById('mobileAnswerLang');
 
-      function updateMobileLangLabel() {
-        const speak = mobileSpeak.value || 'Speaking';
-        const ans   = mobileAnswer.value || 'Answer';
-        const mobileLabel = document.getElementById('mobileLangLabel');
-        if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
-      }
-      mobileSpeak?.addEventListener('change', ()=>{
-        if (speakSelect.value !== mobileSpeak.value) {
-          speakSelect.value = mobileSpeak.value;
-          updateLangLabel(); safeValidate();
-        }
-        updateMobileLangLabel();
-      });
-      mobileAnswer?.addEventListener('change', ()=>{
-        if (answerSelect.value !== mobileAnswer.value) {
-          answerSelect.value = mobileAnswer.value;
-          updateLangLabel(); safeValidate();
-        }
-        updateMobileLangLabel();
-      });
+  function updateMobileLangLabel() {
+    const speak = mobileSpeak.value || 'Speaking';
+    const ans = mobileAnswer.value || 'Answer';
+    const mobileLabel = document.getElementById('mobileLangLabel');
+    if (mobileLabel) mobileLabel.textContent = speak + ' → ' + ans;
+  }
+  mobileSpeak?.addEventListener('change', ()=>{
+    if (speakSelect.value !== mobileSpeak.value) {
+      speakSelect.value = mobileSpeak.value;
+      updateLangLabel(); safeValidate();
+    }
+    updateMobileLangLabel();
+  });
+  mobileAnswer?.addEventListener('change', ()=>{
+    if (answerSelect.value !== mobileAnswer.value) {
+      answerSelect.value = mobileAnswer.value;
+      updateLangLabel(); safeValidate();
+    }
+    updateMobileLangLabel();
+  });
 
-      // Expose sync function name for optional call above
-      window.syncChatsFromFirestore = async function(uid){ /* no-op placeholder */ };
-    </script>
+  window.syncChatsFromFirestore = async function(uid){ /* no-op placeholder */ };
+</script>
+
 
     <!-- Non-module libs -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
